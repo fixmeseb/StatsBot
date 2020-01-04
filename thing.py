@@ -4,6 +4,8 @@ import xlrd
 import xlwt
 from xlwt import Workbook
 wb = Workbook()
+wr = xlrd.open_workbook("C:\\Users\\Sebastian_Polge\\OneDrive-CaryAcademy\\Documents\\meNewBot\\Verity\\StatsBot\\Beep.xls") 
+
 client = discord.Client()
 
 @client.event
@@ -31,12 +33,12 @@ async def on_message(message):
         wb.save("Beep.xls")
                 
     if message.content.startswith('$serverStatCount'):
-        server = message.guild.channels
+        server = message.guild.text_channels
         for channel in server:
-            async for message in channel.history(limit=None):
+            async for message in channel.history(limit=200):
                 x = 0
                 y = 0
-                sheet = wb.sheet_by_index(0) 
+                sheet = wr.sheet_by_index(0) 
                 for i in range(sheet.nrows):
                     if sheet.cell_value(i, 0) == message.channel:
                         x = i
