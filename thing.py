@@ -7,6 +7,7 @@ from xlutils.copy import copy
 from xlrd import open_workbook
 from datetime import date
 from datetime import datetime
+from discord.utils import get
 
 
 
@@ -26,11 +27,24 @@ async def on_message(message):
         return
         
     if message.content.startswith('&userInfo'):
-        embed = discord.Embed(title="Title", description="Desc", color=0x00ff00)
-        embed.add_field(name="Field1", value="hi", inline=False)
-        embed.add_field(name="Field2", value="hi2", inline=False)
-        await message.channel.send(embed=embed)                
-    if message.content.startswith('&serverStatCount'):
+        messageContentList = message.content.split(" ")
+        if len(messageContentList) > 1:
+            userPing = messageContentList[1]
+            print(userPing)
+            userPingList = userPing.split('!')
+            userPingThing = userPingList[1].split('>')
+            userID = userPingThing[0]
+            print(userID)
+            user = get(client.get_all_members(), id=userID)
+            print(user.name)                            
+            embed = discord.Embed(title="User", color=0xFF9900)
+            embed.add_field(name="Total Messages Sent on this server", value = "Bleep", inline=False)
+            embed.add_field(name="Most Active Server", value="Beep", inline=False)
+            embed.add_field(name="Total Messages Sent", value="Bloop", inline=False)
+            embed.set_thumbnail(url="https://upload.wikimedia.org/wikipedia/en/1/19/Batman_%28circa_2016%29.png")
+            await message.channel.send(embed=embed)                
+        
+    if message.content.startswith('&serverStatCount') and message.author.id == 366709133195476992:
         wb = Workbook()
         sheet1 = wb.add_sheet('Sheet 1')
         i = 1
