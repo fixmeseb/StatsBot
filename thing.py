@@ -5,6 +5,8 @@ import xlwt
 from xlwt import Workbook
 from xlutils.copy import copy 
 from xlrd import open_workbook
+from datetime import date
+from datetime import datetime
 
 
 
@@ -39,59 +41,69 @@ async def on_message(message):
         channelQuant = len(channelList)
         x = 1
         for channel in channelList:
-            sheet1.write(0, x, channel.name)
-            x+=1
-            print("Added #" + channel.name)
+            if channel.name != "robot-game" and channel.name != "starfall-private-space" and channel.name != "ca-nerd-squad":
+                sheet1.write(0, x, channel.name)
+                x+=1
+                print("Added #" + channel.name)
         wb.save("Beep.xls")
         server = message.guild.text_channels       
         for channel in server:
-            y = 1
-            authorMessageQuant = {
-            }
-            for member in memberList:
-                authorMessageQuant[member.name] = 0
-            async for message in channel.history(limit=None):
+            if channel.name != "robot-game" and channel.name != "starfall-private-space" and channel.name != "ca-nerd-squad":
+                y = 1
+                authorMessageQuant = {
+                }
                 for member in memberList:
-                    if member.name == message.author.name:
-                        #print("Found author!")
-                        authorMessageQuant[member.name] = str(int(authorMessageQuant[member.name])+ 1)
-            sheet = wr.sheet_by_index(0) 
-            for i in range(sheet.ncols):
-                if sheet.cell_value(0,i) == channel.name:
-                    print("Channel is found!") 
-                    y = i
-            for member in authorMessageQuant:
-                x = 1
-                for i in range(sheet.nrows):
-                    if sheet.cell_value(i,0) == member:
-                        print("Author is found!") 
-                        x = i
-                print(str(x) + "/" + str(memberQuant) + ";" + str(y) + "/" + str(channelQuant))
-                messageCount = authorMessageQuant[member]
-                sheet1.write(x, y, int(messageCount))
-                zed = y
-                wb.save("Beep.xls")
+                    authorMessageQuant[member.name] = 0
+                async for message in channel.history(limit=None):
+                    for member in memberList:
+                        if member.name == message.author.name:
+                            #print("Found author!")
+                            authorMessageQuant[member.name] = str(int(authorMessageQuant[member.name])+ 1)
+                sheet = wr.sheet_by_index(0) 
+                for i in range(sheet.ncols):
+                    if sheet.cell_value(0,i) == channel.name:
+                        print("Channel is found!") 
+                        y = i
+                for member in authorMessageQuant:
+                    x = 1
+                    for i in range(sheet.nrows):
+                        if sheet.cell_value(i,0) == member:
+                            print("Author is found!") 
+                            x = i
+                    print(str(x) + "/" + str(memberQuant) + ";" + str(y) + "/" + str(channelQuant) + " #" + str(channel.name))
+                    messageCount = authorMessageQuant[member]
+                    sheet1.write(x, y, int(messageCount))
+                    zed = y + 1
+                    wb.save("Beep.xls")
         x = 1
-        zed +=1
         sheet1.write(0, zed, "Message Total:")
+        sheet1.write(0, zed + 1, "Date Joined:")
+        sheet1.write(0, zed + 2, "Days on Server:")
+        sheet1.write(0, zed + 3, "Message Average:")
         for member in memberList:
-            timesThroughAlphabet = len(channelList) / 26
-            alphabet = {
-                
-            }
-            sheet1.write(x, zed, xlwt.Formula("=SUM"))
-            x+=1
+            string = ""
+            n = y
+            while n > 0:
+                n, remainder = divmod(n - 1, 26)
+                string = chr(65 + remainder) + string
+            print(string)
+            value1 = "B" + str(x + 1)
+            value2 = string + str(x + 1)
+            sheet1.write(x, zed, xlwt.Formula("SUM(" + value1 + ":" + value2 + ")"))
             print("Zed: " + str(zed) + ", x: " + str(x))
-        wb.save("Beep.xls")
-        x = 1
-        zed +=1
-        sheet1.write(0, zed, "Date Joined:")
-        for member in memberList:
             dateTimeFull = member.joined_at
             dateTimeSplit = str(dateTimeFull).split()
-            sheet1.write(x, zed, dateTimeSplit[0])
-            x+=1
+            sheet1.write(x, zed + 1, dateTimeSplit[0])
             print("Zed: " + str(zed) + ", x: " + str(x))
+            dateTimeFull = member.joined_at
+            dateJoined = datetime.date(dateTimeFull)
+            dateTimeSplit = str(dateTimeFull).split()
+            currentDate = datetime.date(datetime.now())
+            delta = currentDate - dateJoined
+            sheet1.write(x, zed + 2, delta.days)
+            sheet1.write(x, zed + 3, xlwt.Formula("SUM(" + value1 + ":" + value2 + ")/" + str(delta.days))) 
+            print("Zed: " + str(zed) + ", x: " + str(x))
+            x+=1
         wb.save("Beep.xls")
         print("Complete!")
 
