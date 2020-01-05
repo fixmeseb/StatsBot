@@ -29,11 +29,13 @@ async def on_message(message):
         sheet1 = wb.add_sheet('Sheet 1')
         i = 1
         memberList = message.guild.members
+        memberQuant = len(memberList)
         for member in memberList:
             sheet1.write(i, 0, member.name)
             i+=1
             print("Added " + member.name)
         channelList = message.guild.text_channels
+        channelQuant = len(channelList)
         x = 1
         for channel in channelList:
             sheet1.write(0, x, channel.name)
@@ -63,7 +65,7 @@ async def on_message(message):
                         if sheet.cell_value(i,0) == member.name:
                             print("Author is found!") 
                             x = i
-                    print(str(x) + ";" + str(y))
+                    print(str(x) + "/" + str(memberQuant) + ";" + str(y) + "/" + str(channelQuant))
                 
                     async for message in channel.history(limit=None):
                         if (message.author.name == member.name):
