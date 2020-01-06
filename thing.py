@@ -35,13 +35,37 @@ async def on_message(message):
             userPingThing = userPingList[1].split('>')
             userID = userPingThing[0]
             print(userID)
-            user = get(client.get_all_members(), id=userID)
-            print(user.name)                            
-            embed = discord.Embed(title="User", color=0xFF9900)
-            embed.add_field(name="Total Messages Sent on this server", value = "Bleep", inline=False)
+            print("366709133195476992")
+            user = client.get_user(int(userID))
+            print(user.name)
+            userURL = str(user.avatar_url)
+            wz = xlrd.open_workbook("C:\\Users\\Sebastian_Polge\\OneDrive-CaryAcademy\\Documents\\meNewBot\\Verity\\StatsBot\\Complete.xls")
+            sheet = wz.sheet_by_index(0)
+            sheetList = wz.sheets()
+            string = message.guild.name
+            numberOfChannels = 0
+            positionOfUser = 0                
+            guildSheet = wz.sheet_by_name(string)
+            numberOfChannels = guildSheet.ncols - 1
+            for i in range(guildSheet.nrows): 
+                print(guildSheet.cell_value(i, 0))
+                if guildSheet.cell_value(i, 0) == user.name:
+                    positionOfUser = i
+            print (numberOfChannels - 3)
+            print (positionOfUser + 1)
+            totalMessagesSentServer = guildSheet.cell_value(positionOfUser, numberOfChannels - 3)
+            for server in sheetList:
+                serverMembers = []
+                for i in range(server.nrows): 
+                    print(server.cell_value(i, 0))
+                    serverMembers.add(server.cell_value(i, 0))
+                if serverMembers.__contains__
+                     
+            embed = discord.Embed(title=user.name, color=0xFF9900)
+            embed.add_field(name="Total Messages Sent on this Server", value = totalMessagesSentServer, inline=False)
             embed.add_field(name="Most Active Server", value="Beep", inline=False)
             embed.add_field(name="Total Messages Sent", value="Bloop", inline=False)
-            embed.set_thumbnail(url="https://upload.wikimedia.org/wikipedia/en/1/19/Batman_%28circa_2016%29.png")
+            embed.set_thumbnail(url=userURL)
             await message.channel.send(embed=embed)                
         
     if message.content.startswith('&serverStatCount') and message.author.id == 366709133195476992:
