@@ -93,6 +93,8 @@ async def on_message(message):
         positionOfAverageMessage = guildSheet.ncols -1
         activeMember = ""
         activeMemberActivity = 0
+        activeMemberNoCount = ""
+        activeMemberNoCountNum = 0
         totalMessages = 0
         for i in range(guildSheet.nrows):
             if (i != 0):
@@ -100,9 +102,17 @@ async def on_message(message):
                 if (guildSheet.cell_value(i, positionOfAverageMessage) > activeMemberActivity):
                     activeMemberActivity = guildSheet.cell_value(i, positionOfAverageMessage)
                     activeMember = guildSheet.cell_value(i, 0)
+        for i in range(guildSheet.nrows):
+            if (i != 0) and message.guild.name == "The CA Discord":
+                beep = guildSheet.cell_value(i, guildSheet.ncols - 4) - guildSheet.cell_value(i, 12)/guildSheet.cell_value(i, guildSheet.ncols - 2)
+                print(guildSheet.cell_value(i, 0), ": " + str(beep))
+                if (beep > activeMemberNoCountNum):
+                    activeMemberNoCountNum = beep
+                    activeMemberNoCount = guildSheet.cell_value(i, 0)
         totalPerChannel = 0
         sumTotal = 0
         channelName = ""
+        countingAndRecursionInt = -1
         endCol = guildSheet.ncols - 4
         for i in range(guildSheet.ncols):
             sumTotal = 0
@@ -111,13 +121,28 @@ async def on_message(message):
                   if (v != 0):
                       sumTotal+=int(guildSheet.cell_value(v, i))
                 if (sumTotal > totalPerChannel):
-                    channelName = guildSheet.cell_value(0, i)
-                    totalPerChannel = sumTotal
+                    if guildSheet.cell_value(0, i) != "counting-and-recursion":
+                        channelName = guildSheet.cell_value(0, i)
+                        totalPerChannel = sumTotal
+                    else:
+                        countingAndRecursionInt = sumTotal
         print (channelName +": " + str(totalPerChannel))
+        memberCount = guildSheet.nrows - 1
+        channelCount = guildSheet.ncols - 5
+        owner = message.guild.owner.name
         embed = discord.Embed(title=message.guild.name, color=0xFF9900)
         embed.add_field(name="Total Messages Sent on this Server", value = int(totalMessages), inline=False)
         embed.add_field(name="Most Active Member", value=activeMember, inline=False)
-        embed.add_field(name="Highest Message Count per Channel", value=channelName, inline=False)
+        if message.guild.name == "The CA Discord":
+            embed.add_field(name="Most Active Member, Not Including #counting-and-recursion", value=activeMemberNoCount, inline=False)
+        if (countingAndRecursionInt > totalPerChannel):
+            embed.add_field(name="Highest Message Count per Channel, Not Including #counting-and-recursion", value="#" + channelName, inline=False)
+            embed.add_field(name="Highest Message Count per Channel", value="#counting-and-recursion", inline=False)
+        else:
+            embed.add_field(name="Highest Message Count per Channel", value=channelName, inline=False)
+        embed.add_field(name="Number of Members", value=memberCount, inline=False)
+        embed.add_field(name="Number of Channels", value=channelCount, inline=False)
+        embed.add_field(name="Owner", value=owner, inline=False)
         embed.set_thumbnail(url=message.guild.icon_url)
         embed.set_footer(text="Created by The Invisible Man", icon_url="https://cdn.discordapp.com/avatars/366709133195476992/01cb7c2c7f2007d8b060e084ea4eb6fd.png?size=512")
         await message.channel.send(embed=embed) 
