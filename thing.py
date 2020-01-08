@@ -260,21 +260,55 @@ async def on_message(message):
         print("&serverActiveList begun")
         wz = xlrd.open_workbook("C:\\Users\\Sebastian_Polge\\OneDrive-CaryAcademy\\Documents\\meNewBot\\Verity\\StatsBot\\Complete.xls")
         guildSheet = wz.sheet_by_name(message.guild.name)
-        positionOfAverageColumn = guildSheet.ncols - 1
-        embed = discord.Embed(title="Most Active On Server", color=0xFF9900)
-        x = []
-        for i in range(guildSheet.nrows):
-            if i != 0:
-                y = [guildSheet.cell_value(i, 0), guildSheet.cell_value(i, positionOfAverageColumn)]
-                x.append(y)
+        if len(message.content.split()) > 1:
+            uncludeChannels = []
+            for i in message.content.split():
+                if message.content.split().index(i) != 0:
+                    uncludeChannels.append(i)
+                    print(i)
+            positionOfAverageColumn = guildSheet.ncols - 1
+            positionOfDaysCol = guildSheet.ncols - 2
+            positionOfTotalCol = guildSheet.ncols - 4
+            embed = discord.Embed(title="Most Active On Server", color=0xFF9900)
+            x = []
+            for i in range(guildSheet.nrows):
+                if i != 0:
+                    grandTotal = 0
+                    for c in range(guildSheet.ncols):
+                        if c > 0 and c < positionOfTotalCol:
+                            if guildSheet.cell_value(0, c) in uncludeChannels:
+                                print("unclude " + guildSheet.cell_value(0, c))
+                            else:
+                                print("include " + guildSheet.cell_value(0, c))
+                                grandTotal += guildSheet.cell_value(i, c)
+                                y = [guildSheet.cell_value(i, 0), guildSheet.cell_value(i, positionOfAverageColumn)]
+                            x.append(y)
+            for i in sorted(x, key = lambda x: x[1])[::-1]:
+                bloop = round(i[1], 2)
+                embed.add_field(name=i[0], value= "Average of " + str(bloop) + " messages per day", inline=False)
+                print(str(i[0]) + " added")
+                print("X len: " + str(len(x)))
+
+            embed.set_thumbnail(url=message.guild.icon_url)
+            embed.set_footer(text="Created by The Invisible Man", icon_url="https://cdn.discordapp.com/avatars/366709133195476992/01cb7c2c7f2007d8b060e084ea4eb6fd.png?size=512")
+            await message.channel.send(embed=embed)
+
+        else:
+            positionOfAverageColumn = guildSheet.ncols - 1
+            embed = discord.Embed(title="Most Active On Server", color=0xFF9900)
+            x = []
+            for i in range(guildSheet.nrows):
+                if i != 0:
+                    y = [guildSheet.cell_value(i, 0), guildSheet.cell_value(i, positionOfAverageColumn)]
+                    x.append(y)
             
-        for i in sorted(x, key = lambda x: x[1])[::-1]:
-            bloop = round(i[1], 2)
-            embed.add_field(name=i[0], value= "Average of " + str(bloop) + " messages per day", inline=False)
-            print(str(i[0]) + " added")
-        embed.set_thumbnail(url=message.guild.icon_url)
-        embed.set_footer(text="Created by The Invisible Man", icon_url="https://cdn.discordapp.com/avatars/366709133195476992/01cb7c2c7f2007d8b060e084ea4eb6fd.png?size=512")
-        await message.channel.send(embed=embed)
+            for i in sorted(x, key = lambda x: x[1])[::-1]:
+                bloop = round(i[1], 2)
+                embed.add_field(name=i[0], value= "Average of " + str(bloop) + " messages per day", inline=False)
+                print(str(i[0]) + " added")
+            embed.set_thumbnail(url=message.guild.icon_url)
+            embed.set_footer(text="Created by The Invisible Man", icon_url="https://cdn.discordapp.com/avatars/366709133195476992/01cb7c2c7f2007d8b060e084ea4eb6fd.png?size=512")
+            await message.channel.send(embed=embed)
     if message.content.startswith("&help"):
         embed = discord.Embed(title="Help", description="Hello, I'm StatBot! Here are some of my functions: ", color=0xFF9900)
         embed.add_field(name="&userInfo", value="Get information on a user. Either use the user's id or ping the user.", inline=False)
