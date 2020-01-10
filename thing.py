@@ -8,6 +8,7 @@ from xlrd import open_workbook
 from datetime import date
 from datetime import datetime
 from discord.utils import get
+import time
 
 
 
@@ -218,7 +219,7 @@ async def on_message(message):
                     x = 1
                     for i in range(sheet.nrows):
                         if sheet.cell_value(i,0) == member:
-                            print("Author is found!") 
+                            print("Author is found!" + sheet.cell_value(i, 0) + "/" + member) 
                             x = i
                     print(str(x) + "/" + str(memberQuant) + ";" + str(y) + "/" + str(channelQuant) + " #" + str(channel.name))
                     messageCount = authorMessageQuant[member]
@@ -309,6 +310,11 @@ async def on_message(message):
             embed.set_thumbnail(url=message.guild.icon_url)
             embed.set_footer(text="Created by The Invisible Man", icon_url="https://cdn.discordapp.com/avatars/366709133195476992/01cb7c2c7f2007d8b060e084ea4eb6fd.png?size=512")
             await message.channel.send(embed=embed)
+    if message.content.startswith("&I bid y'all adieu") and message.author.id == 366709133195476992:
+        time.sleep(2)
+        await message.channel.send("Farewell, and have a good night!")
+        time.sleep(2)
+        await message.guild.leave()
     if message.content.startswith("&help"):
         embed = discord.Embed(title="Help", description="Hello, I'm StatBot! Here are some of my functions: ", color=0xFF9900)
         embed.add_field(name="&userInfo", value="Get information on a user. Either use the user's id or ping the user.", inline=False)
@@ -316,4 +322,7 @@ async def on_message(message):
         embed.add_field(name="&serverActiveList", value="Get a list of the most active members on the server. Uses total messages sent over time on server.", inline=False)
         embed.set_footer(text="Created by The Invisible Man", icon_url="https://cdn.discordapp.com/avatars/366709133195476992/01cb7c2c7f2007d8b060e084ea4eb6fd.png?size=512")
         await message.channel.send(embed=embed)
+    if message.content.startswith("&guilds"):
+        for i in client.guilds:
+            await message.channel.send(i.name)
 client.run('NjYyNzg4MTk1NzM3NDAzNDQy.Xg_Dqg.RvP5k1D4dWeg0tqomlXiaHz7QQg')
