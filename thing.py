@@ -8,12 +8,12 @@ from xlrd import open_workbook
 from datetime import date
 from datetime import datetime
 from discord.utils import get
-import time
+from openpyxl import load_workbook
+
 
 
 
 wb = Workbook()
-wr = xlrd.open_workbook("C:\\Users\\Sebastian_Polge\\OneDrive-CaryAcademy\\Documents\\meNewBot\\Verity\\StatsBot\\Beep.xls") 
 
 
 client = discord.Client()
@@ -97,14 +97,16 @@ async def on_message(message):
                     serverMembers = []
                     for i in range(server.nrows): 
                         #print(server.cell_value(i, 0))
-                        serverMembers.append(server.cell_value(i, 0))
+                        beep = server.cell_value(i, 0)
+                        serverMembers.append(beep)
                     if user.name in serverMembers:
                         locationUser = serverMembers.index(user.name)
                         totalMessageLoction = server.ncols - 4
                         averageMessageLocation = server.ncols - 1
                         #print("Row: " + str(locationUser) + ", Col: " + str(totalMessageLoction))
-                        totalMessagesSent = totalMessagesSent + server.cell_value(locationUser, totalMessageLoction)
-                        #print("Server Messages: " + str(server.cell_value(locationUser, totalMessageLoction)))
+                        print("Server Average Messages: " + str(server.cell_value(locationUser, averageMessageLocation)))
+                        print("Server Total Messages: " + str(server.cell_value(locationUser, totalMessageLoction)))
+                        totalMessagesSent = totalMessagesSent + int(server.cell_value(locationUser, totalMessageLoction))
                         if messageAverage < server.cell_value(locationUser, averageMessageLocation) and server.cell_value(locationUser, averageMessageLocation) > 0:
                             messageAverage = server.cell_value(locationUser, averageMessageLocation)
                             messageAverageServer = server.name
@@ -220,6 +222,7 @@ async def on_message(message):
                         if member.name == message.author.name:
                             #print("Found author!")
                             authorMessageQuant[member.name] = str(int(authorMessageQuant[member.name])+ 1)
+                wr = xlrd.open_workbook("C:\\Users\\Sebastian_Polge\\OneDrive-CaryAcademy\\Documents\\meNewBot\\Verity\\StatsBot\\" + message.guild.name + ".xls") 
                 sheet = wr.sheet_by_index(0) 
                 for i in range(sheet.ncols):
                     if sheet.cell_value(0,i) == channel.name:
@@ -318,7 +321,6 @@ async def on_message(message):
             embed.set_footer(text="Created by The Invisible Man", icon_url="https://cdn.discordapp.com/avatars/366709133195476992/01cb7c2c7f2007d8b060e084ea4eb6fd.png?size=512")
             await message.channel.send(embed=embed)
         print("\n")
-
     if message.content.startswith("&I bid y'all adieu") and message.author.id == 366709133195476992:
         time.sleep(2)
         await message.channel.send("Farewell, and have a good night!")
@@ -331,7 +333,121 @@ async def on_message(message):
         embed.add_field(name="&serverActiveList", value="Get a list of the most active members on the server. Uses total messages sent over time on server.", inline=False)
         embed.set_footer(text="Created by The Invisible Man", icon_url="https://cdn.discordapp.com/avatars/366709133195476992/01cb7c2c7f2007d8b060e084ea4eb6fd.png?size=512")
         await message.channel.send(embed=embed)
-    if message.content.startswith("&guilds"):
-        for i in client.guilds:
-            await message.channel.send(i.name)
+    if message.content.startswith('&statCountAllServer') and message.author.id == 366709133195476992:
+        for serverActive in client.guilds:
+            #await message.channel.send("Server:" + serverActive.name)
+            wb = Workbook()
+            sheet1 = wb.add_sheet('Sheet 1')
+            i = 1
+            zed = 0
+            memberList = serverActive.members
+            memberQuant = len(memberList)
+            for member in memberList:
+                sheet1.write(i, 0, member.name)
+                i+=1
+                print("Added " + member.name)
+            channelList = serverActive.text_channels
+            channelQuant = len(channelList)
+            x = 1
+            for channel in channelList:
+                if channel.name != "robot-game" and channel.name != "starfall-private-space" and channel.name != "ca-nerd-squad":
+                    sheet1.write(0, x, channel.name)
+                    x+=1
+                    print("Added #" + channel.name)
+            wb.save(serverActive.name + ".xls")
+            server = serverActive.text_channels       
+            for channel in server:
+                if channel.name != "robot-game" and channel.name != "starfall-private-space" and channel.name != "ca-nerd-squad":
+                    y = 1
+                    authorMessageQuant = {
+                    }
+                    for member in memberList:
+                        authorMessageQuant[member.name] = 0
+                    async for message in channel.history(limit=None):
+                        for member in memberList:
+                            if member.name == message.author.name:
+                                #print("Found author!")
+                                authorMessageQuant[member.name] = str(int(authorMessageQuant[member.name])+ 1)
+                    wr = xlrd.open_workbook("C:\\Users\\Sebastian_Polge\\OneDrive-CaryAcademy\\Documents\\meNewBot\\Verity\\StatsBot\\" + serverActive.name + ".xls") 
+                    sheet = wr.sheet_by_index(0) 
+                    for stuff in range(sheet.ncols):
+                        if sheet.cell_value(0,stuff) == channel.name:
+                            print("Channel is found!") 
+                            y = stuff
+                    for member in authorMessageQuant:
+                        x = 1
+                        for mStuff in range(sheet.nrows):
+                            if sheet.cell_value(mStuff,0) == member:
+                                print("Author is found!" + sheet.cell_value(mStuff, 0) + "/" + member) 
+                                x = mStuff
+                        print(str(x) + "/" + str(memberQuant) + ";" + str(y) + "/" + str(channelQuant) + " #" + str(channel.name))
+                        messageCount = authorMessageQuant[member]
+                        sheet1.write(x, y, int(messageCount))
+                        zed = y + 1
+                        wb.save(message.guild.name + ".xls")
+            x = 1
+            sheet1.write(0, zed, "Message Total:")
+            sheet1.write(0, zed + 1, "Date Joined:")
+            sheet1.write(0, zed + 2, "Days on Server:")
+            sheet1.write(0, zed + 3, "Message Average:")
+            for member in memberList:
+                string = ""
+                n = y
+                while n > 0:
+                    n, remainder = divmod(n - 1, 26)
+                    string = chr(65 + remainder) + string
+                print(string)
+                value1 = "B" + str(x + 1)
+                value2 = string + str(x + 1)
+                sheet1.write(x, zed, xlwt.Formula("SUM(" + value1 + ":" + value2 + ")"))
+                print("Zed: " + str(zed) + ", x: " + str(x))
+                dateTimeFull = member.joined_at
+                dateTimeSplit = str(dateTimeFull).split()
+                sheet1.write(x, zed + 1, dateTimeSplit[0])
+                print("Zed: " + str(zed) + ", x: " + str(x))
+                dateTimeFull = member.joined_at
+                dateJoined = datetime.date(dateTimeFull)
+                dateTimeSplit = str(dateTimeFull).split()
+                currentDate = datetime.date(datetime.now())
+                delta = currentDate - dateJoined
+                sheet1.write(x, zed + 2, delta.days)
+                sheet1.write(x, zed + 3, xlwt.Formula("SUM(" + value1 + ":" + value2 + ")/" + str(delta.days))) 
+                print("Zed: " + str(zed) + ", x: " + str(x))
+                x+=1
+            wb.save(serverActive.name + ".xls")
+            print("Complete!")
+    if message.content.startswith('&updateComplete') and message.author.id == 366709133195476992:
+        wc = Workbook()
+        for serverActive in client.guilds:
+            rb = xlrd.open_workbook("C:\\Users\\Sebastian_Polge\\OneDrive-CaryAcademy\\Documents\\meNewBot\\Verity\\StatsBot\\Complete.xls") 
+            serverStatBook = xlrd.open_workbook("C:\\Users\\Sebastian_Polge\\OneDrive-CaryAcademy\\Documents\\meNewBot\\Verity\\StatsBot\\" + serverActive.name + ".xls") 
+            serverStat = serverStatBook.sheet_by_index(0)
+            sheetOne = wc.add_sheet(serverActive.name)
+            for i in range(serverStat.ncols):
+                for j in range(serverStat.nrows):
+                    if i != serverStat.ncols - 1 and i != serverStat.ncols - 4:
+                        sheetOne.write(j, i, serverStat.cell_value(j,i))
+            for j in range(serverStat.nrows):
+                if j != 0:
+                    string = ""
+                    n = serverStat.ncols - 5
+                    while n > 0:
+                        n, remainder = divmod(n - 1, 26)
+                        string = chr(65 + remainder) + string
+                    value1 = "B" + str(j + 1)
+                    value2 = string + str(j + 1)
+                    formula = "SUM(" + value1 + ":" + value2 + ")"
+                    sheetOne.write(j, serverStat.ncols - 4, xlwt.Formula(formula))
+                    print("Formula: " + formula)
+                    member = discord.utils.get(serverActive.members, name=serverStat.cell_value(j,0))
+                    dateTimeFull = member.joined_at
+                    dateJoined = datetime.date(dateTimeFull)
+                    dateTimeSplit = str(dateTimeFull).split()
+                    currentDate = datetime.date(datetime.now())
+                    delta = currentDate - dateJoined
+                    sheetOne.write(j, serverStat.ncols - 1, xlwt.Formula("SUM(" + value1 + ":" + value2 + ")/" + str(delta.days)))
+                    wc.save("Complete.xls")
+        print("Completed.")
+    
+
 client.run('NjYyNzg4MTk1NzM3NDAzNDQy.Xg_Dqg.RvP5k1D4dWeg0tqomlXiaHz7QQg')
