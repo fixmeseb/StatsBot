@@ -62,7 +62,7 @@ async def on_message(message):
         numberOfChannels = guildSheet.ncols - 1
         for i in range(guildSheet.nrows): 
             #print(guildSheet.cell_value(i, 0))
-            if guildSheet.cell_value(i, 0) == user.name:
+            if guildSheet.cell_value(i, 0) == user.id:
                 positionOfUser = i
                 #print (numberOfChannels - 3)
                 #print (positionOfUser)
@@ -343,9 +343,9 @@ async def on_message(message):
             memberList = serverActive.members
             memberQuant = len(memberList)
             for member in memberList:
-                sheet1.write(i, 0, member.name)
+                sheet1.write(i, 0, member.id)
                 i+=1
-                print("Added " + member.name)
+                print("Added " + member.name + "(" + member.id + ")")
             channelList = serverActive.text_channels
             channelQuant = len(channelList)
             x = 1
