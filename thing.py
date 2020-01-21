@@ -1,4 +1,7 @@
 #To-Do:
+# -Channel Info
+# -Appropriate Error Messages
+# -Move to functions
 
 import discord
 #This imports Discord. Named thing.py because my old bots had their main files in thing.js, and I'm sentimental. 
@@ -110,12 +113,12 @@ async def on_message(message):
                     embed.add_field(name="Messages Sent in Counting and Recursion: ", value=int(guildSheet.cell_value(positionOfUser, 12)), inline=False)
                     embed.add_field(name="Messages Sent Not in Counting and Recursion: ", value=int(totalMessagesSentServer) - int(guildSheet.cell_value(positionOfUser, 12)), inline=False)
                 else:
-                    embed.add_field(name="Total Messages Sent on this Server", value=int(totalMessagesSentServer), inline=False)
-                embed.add_field(name="Highest Message Number Channel on this Server", value=activeChannel, inline=False)
-                embed.add_field(name="Most Active Channel on this Server", value=str(activeChannelA), inline=False)
-                embed.add_field(name="Average Messages on this Server Per Day", value=str(round(messageAverageOnServer, 2)), inline=False)
-                embed.add_field(name="Most Active Server", value=messageAverageServer, inline=False)
-                embed.add_field(name="Total Messages Sent", value=int(totalMessagesSent), inline=False)
+                    embed.add_field(name="Total Messages Sent on this Server: ", value=int(totalMessagesSentServer), inline=False)
+                embed.add_field(name="Highest Message Number Channel on this Server: ", value=activeChannel, inline=False)
+                embed.add_field(name="Most Active Channel on this Server: ", value=str(activeChannelA), inline=False)
+                embed.add_field(name="Average Messages on this Server Per Day: ", value=str(round(messageAverageOnServer, 2)), inline=False)
+                embed.add_field(name="Most Active Server: ", value=messageAverageServer, inline=False)
+                embed.add_field(name="Total Messages Sent: ", value=int(totalMessagesSent), inline=False)
                 embed.set_thumbnail(url=userURL)
                 embed.set_footer(text="Created by The Invisible Man", icon_url="https://cdn.discordapp.com/avatars/366709133195476992/01cb7c2c7f2007d8b060e084ea4eb6fd.png?size=512")
                 await message.channel.send(embed=embed)
@@ -141,7 +144,7 @@ async def on_message(message):
                 if (guildSheet.cell_value(i, positionOfAverageMessage) > activeMemberActivity):
                     activeMemberActivity = guildSheet.cell_value(i, positionOfAverageMessage)
                     activeMemberID = guildSheet.cell_value(i, 0)
-                    activeMember = client.get_user(activeMemberID)
+                    activeMember = message.guild.get_member(int(activeMemberID))
         for i in range(guildSheet.nrows):
             if (i != 0) and message.guild.name == "The CA Discord":
                 boop = guildSheet.cell_value(i, guildSheet.ncols - 4) - guildSheet.cell_value(i, 12)
@@ -149,7 +152,7 @@ async def on_message(message):
                 if (beep > activeMemberNoCountNum):
                     activeMemberNoCountNum = beep
                     activeMemberNoCountID = guildSheet.cell_value(i, 0)
-                    activeMemberNoCount = client.get_user(activeMemberNoCountID)
+                    activeMemberNoCount = message.guild.get_member(int(activeMemberNoCountID))
         totalPerChannel = 0
         sumTotal = 0
         channelName = ""
@@ -171,19 +174,24 @@ async def on_message(message):
         memberCount = guildSheet.nrows - 1
         channelCount = guildSheet.ncols - 5
         owner = message.guild.owner.name
+        currentDate = datetime.date(datetime.now())
+        serverAge = message.guild.created_at
+        delta = currentDate - datetime.date(serverAge)
+        messageActivity = int(totalMessages) / delta.days
         embed = discord.Embed(title=message.guild.name, color=0xFF9900)
-        embed.add_field(name="Total Messages Sent on this Server", value = int(totalMessages), inline=False)
-        embed.add_field(name="Most Active Member", value=activeMember, inline=False)
+        embed.add_field(name="Total Messages Sent on this Server: ", value = int(totalMessages), inline=False)
+        embed.add_field(name="Most Active Member: ", value=activeMember.name, inline=False)
         if message.guild.name == "The CA Discord":
-            embed.add_field(name="Most Active Member, Not Including #counting-and-recursion", value=activeMemberNoCount, inline=False)
+            embed.add_field(name="Most Active Member, Not Including #counting-and-recursion: ", value=activeMemberNoCount.name, inline=False)
         if (countingAndRecursionInt > totalPerChannel):
-            embed.add_field(name="Highest Message Count per Channel, Not Including #counting-and-recursion", value="#" + channelName, inline=False)
-            embed.add_field(name="Highest Message Count per Channel", value="#counting-and-recursion", inline=False)
+            embed.add_field(name="Highest Message Count per Channel, Not Including #counting-and-recursion: ", value="#" + channelName, inline=False)
+            embed.add_field(name="Highest Message Count per Channel", value="#counting-and-recursion: ", inline=False)
         else:
-            embed.add_field(name="Highest Message Count per Channel", value=channelName, inline=False)
-        embed.add_field(name="Number of Members", value=memberCount, inline=False)
-        embed.add_field(name="Number of Channels", value=channelCount, inline=False)
-        embed.add_field(name="Owner", value=owner, inline=False)
+            embed.add_field(name="Highest Message Count per Channel: ", value=channelName, inline=False)
+        embed.add_field(name="Number of Members: ", value=memberCount, inline=False)
+        embed.add_field(name="Number of Channels: ", value=channelCount, inline=False)
+        embed.add_field(name="Message Activity: ", value=str(round(messageActivity,2)) + " messages per day.", inline=False)
+        embed.add_field(name="Owner: ", value=owner, inline=False)
         embed.set_thumbnail(url=message.guild.icon_url)
         embed.set_footer(text="Created by The Invisible Man", icon_url="https://cdn.discordapp.com/avatars/366709133195476992/01cb7c2c7f2007d8b060e084ea4eb6fd.png?size=512")
         await message.channel.send(embed=embed) 
@@ -294,10 +302,11 @@ async def on_message(message):
                                 y = [guildSheet.cell_value(i, 0), guildSheet.cell_value(i, positionOfAverageColumn)]
                             x.append(y)
             for i in sorted(x, key = lambda x: x[1])[::-1]:
+                messageTotal = z
                 bloop = round(i[1], 2)
                 userUserName = message.guild.get_member(i[0])
 
-                embed.add_field(name=userUserName.name, value= "Average of " + str(bloop) + " messages per day", inline=False)
+                embed.add_field(name=userUserName.name, value= "Average of " + str(bloop) + " messages per day (" + str(), inline=False)
                 #print(str(i[0]) + " added")
                 #print("X len: " + str(len(x)))
 
@@ -330,20 +339,55 @@ async def on_message(message):
         await message.channel.send("Farewell, and have a good night!")
         time.sleep(2)
         await message.guild.leave()
-    if message.content.startswith("&channelInfo"):
+    if message.content.startswith("&channelInfo") or message.content.startswith("&channelinfo"):
+        print("Channel Info request made by " + message.author.name + " at " + str(message.created_at) + " on guild " + message.guild.name)
         channel = message.channel
         if len(message.content.split(" ")) > 1:
             messageSplit = message.content.split(" ")
             channelNotif = messageSplit[1].split("#")
             channelNotifSplit2 = channelNotif[1].split(">")
             channelID = channelNotifSplit2[0]
-            channel = message.guild.get_channel(int(channelID))        
+            channel = message.guild.get_channel(int(channelID))
+        wz = xlrd.open_workbook("C:\\Users\\Sebastian_Polge\\OneDrive-CaryAcademy\\Documents\\meNewBot\\Verity\\StatsBot\\Complete.xls")
+        guildSheet = wz.sheet_by_name(message.guild.name)
+        channelPos = -1
+        for i in range(guildSheet.ncols):
+            if guildSheet.cell_value(0, i) == channel.name:
+                channelPos = i
+        messageHighID = ""
+        messageHigh = 0
+        totalMessages = 0
+        print(channel.name + "/" + guildSheet.cell_value(0, channelPos))
+        if channelPos != 0 and channelPos != -1:
+            for i in range(guildSheet.nrows):
+                if i != 0:
+                    totalMessages = totalMessages + int(guildSheet.cell_value(i,channelPos))
+                    if int(guildSheet.cell_value(i, channelPos)) > messageHigh:
+                        messageHigh = guildSheet.cell_value(i, channelPos)
+                        messageHighID = guildSheet.cell_value(i, 0)
+                    else:
+                        if int(guildSheet.cell_value(i, channelPos)) == messageHigh:
+                            messageHighID = messageHighID + "/" + guildSheet.cell_value(i, 0)
+        currentDate = datetime.date(datetime.now())
+        channelAge = channel.created_at
+        delta = currentDate - datetime.date(channelAge)
+        messageActivity = totalMessages / delta.days
+        messageHighUser = channel.guild.get_member(int(messageHighID))
+        embed = discord.Embed(title="#" + channel.name + " info", color=0xFF9900)
+        embed.add_field(name="Person with highest message count: ", value=messageHighUser.name + " (" + str(int(messageHigh)) + " messages)", inline=False)
+        embed.add_field(name="Total Messages Sent:", value=totalMessages, inline=False)
+        embed.add_field(name="Message Activity: ", value=str(round(messageActivity, 2)) + " per day", inline=False)
+        embed.add_field(name="Server: ", value=channel.guild, inline=False)
+        embed.set_thumbnail(url=message.guild.icon_url)
+        embed.set_footer(text="Created by The Invisible Man", icon_url="https://cdn.discordapp.com/avatars/366709133195476992/01cb7c2c7f2007d8b060e084ea4eb6fd.png?size=512")
+        await message.channel.send(embed=embed)
     if message.content.startswith("&help"):
         print("Help request made by " + message.author.name + " at " + str(message.created_at) + " on guild " + message.guild.name)
         embed = discord.Embed(title="Help", description="Hello, I'm StatBot! Here are some of my functions: ", color=0xFF9900)
         embed.add_field(name="&userInfo", value="Get information on a user. Either use the user's id or ping the user.", inline=False)
         embed.add_field(name="&serverInfo", value="Get information on the server.", inline=False)
         embed.add_field(name="&serverActiveList", value="Get a list of the most active members on the server. Uses total messages sent over time on server.", inline=False)
+        embed.add_field(name="&channelInfo", value='Get info on a specific channel. Use the channel' + "'" + 's "ping" to get the channel, or add no other arguements to get the current channel' + "'" + "s info.", inline=False)
         embed.set_footer(text="Created by The Invisible Man", icon_url="https://cdn.discordapp.com/avatars/366709133195476992/01cb7c2c7f2007d8b060e084ea4eb6fd.png?size=512")
         await message.channel.send(embed=embed)
     if message.content.startswith('&statCountAllServer') and message.author.id == 366709133195476992:
