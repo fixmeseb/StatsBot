@@ -7,6 +7,7 @@ import discord
 #This imports Discord. Named thing.py because my old bots had their main files in thing.js, and I'm sentimental. 
 import xlrd
 import xlwt
+import pytz
 from xlwt import Workbook
 from xlutils.copy import copy 
 from xlrd import open_workbook
@@ -17,6 +18,9 @@ from openpyxl import load_workbook
 
 wb = Workbook()
 
+est = pytz.timezone('US/Eastern')
+utc = pytz.utc
+fmt = '%Y-%m-%d %H:%M:%S %Z%z'
 
 client = discord.Client()
 def error():
@@ -56,6 +60,22 @@ async def on_message(message):
         print("Target user URL: " + userURL)
             
         wz = xlrd.open_workbook("C:\\Users\\Sebastian_Polge\\OneDrive-CaryAcademy\\Documents\\meNewBot\\Verity\\StatsBot\\Complete.xls")
+        statBook = xlrd.open_workbook("C:\\Users\\Sebastian_Polge\\OneDrive-CaryAcademy\\Documents\\meNewBot\\Verity\\StatsBot\\TimesMan.xls")
+        statSheet = statBook.sheet_by_index(0)
+        userRow = -1
+        mostActiveHour = "-1"
+        mostActiveHourNumber = 0
+        for i in range(statSheet.nrows):
+            if i != 0 and statSheet.cell_value(i, 0) == str(userID):
+                userRow = i
+        if userRow == -1:
+            error()
+        else:
+            for i in range(statSheet.ncols):
+                if i != 0:
+                    if int(statSheet.cell_value(userRow, i)) >= mostActiveHourNumber and int(statSheet.cell_value(userRow, i)) != 0:
+                        mostActiveHour = str(statSheet.cell_value(0, i))
+                        mostActiveHourNumber = int(statSheet.cell_value(userRow, i))
         sheet = wz.sheet_by_index(0)
         sheetList = wz.sheets()
         string = message.guild.name
@@ -119,6 +139,7 @@ async def on_message(message):
                 embed.add_field(name="Average Messages on this Server Per Day: ", value=str(round(messageAverageOnServer, 2)), inline=False)
                 embed.add_field(name="Most Active Server: ", value=messageAverageServer, inline=False)
                 embed.add_field(name="Total Messages Sent: ", value=int(totalMessagesSent), inline=False)
+                embed.add_field(name="Most Active Time: ", value=mostActiveHour, inline=False)
                 embed.set_thumbnail(url=userURL)
                 embed.set_footer(text="Created by The Invisible Man", icon_url="https://cdn.discordapp.com/avatars/366709133195476992/01cb7c2c7f2007d8b060e084ea4eb6fd.png?size=512")
                 await message.channel.send(embed=embed)
@@ -348,6 +369,7 @@ async def on_message(message):
             channelNotifSplit2 = channelNotif[1].split(">")
             channelID = channelNotifSplit2[0]
             channel = message.guild.get_channel(int(channelID))
+            
         wz = xlrd.open_workbook("C:\\Users\\Sebastian_Polge\\OneDrive-CaryAcademy\\Documents\\meNewBot\\Verity\\StatsBot\\Complete.xls")
         guildSheet = wz.sheet_by_name(message.guild.name)
         channelPos = -1
@@ -388,6 +410,7 @@ async def on_message(message):
         embed.add_field(name="&serverInfo", value="Get information on the server.", inline=False)
         embed.add_field(name="&serverActiveList", value="Get a list of the most active members on the server. Uses total messages sent over time on server.", inline=False)
         embed.add_field(name="&channelInfo", value='Get info on a specific channel. Use the channel' + "'" + 's "ping" to get the channel, or add no other arguements to get the current channel' + "'" + "s info.", inline=False)
+        embed.add_field(name="&timeCounter", value='Get activity times on a specific channel. Use the channel' + "'" + 's "ping" to get the channel. YOU WILL NEED TO GIVE IT SOME TIME!', inline=False)
         embed.set_footer(text="Created by The Invisible Man", icon_url="https://cdn.discordapp.com/avatars/366709133195476992/01cb7c2c7f2007d8b060e084ea4eb6fd.png?size=512")
         await message.channel.send(embed=embed)
     if message.content.startswith('&statCountAllServer') and message.author.id == 366709133195476992:
@@ -414,7 +437,7 @@ async def on_message(message):
             wb.save(serverActive.name + ".xls")
             server = serverActive.text_channels       
             for channel in server:
-                if channel.name != "robot-game" and channel.name != "starfall-private-space" and channel.name != "ca-nerd-squad":
+                if channel.name != "robot-game" and channel.name != "starfall-private-space" and channel.name != "ca-nerd-squad" and channel.name != "vent":
                     y = 1
                     authorMessageQuant = {
                     }
@@ -506,6 +529,167 @@ async def on_message(message):
                     sheetOne.write(j, serverStat.ncols - 1, xlwt.Formula("SUM(" + value1 + ":" + value2 + ")/" + str(delta.days)))
                     wc.save("Complete.xls")
         print("Completed.")
+    if message.content.startswith('&timeCounter') or message.content.startswith('&timecounter'):
+        print("Channel Activity Times request made by " + message.author.name + " at " + str(message.created_at) + " on guild " + message.guild.name)
+        oneSec = await message.channel.send("One second, please...")
+        time = {
+            0:0,
+            1:0,
+            2:0,
+            3:0,
+            4:0,
+            5:0,
+            6:0,
+            7:0,
+            8:0,
+            9:0,
+            10:0,
+            11:0,
+            12:0,
+            13:0,
+            14:0,
+            15:0,
+            16:0,
+            17:0,
+            18:0,
+            19:0,
+            20:0,
+            21:0,
+            22:0,
+            23:0,
+        }
+        if len(message.content.split(' ')) == 1 and message.author.id == 366709133195476992: 
+            for i in message.guild.text_channels:
+                async for mess in i.history(limit=None):
+                    messageTimeUTC = mess.created_at
+                    source_time_zone = pytz.timezone("Etc/UTC")
+                    source_date_with_timezone = source_time_zone.localize(messageTimeUTC)
+                    target_time_zone = est
+                    target_date_with_timezone = source_date_with_timezone.astimezone(target_time_zone)
+                    print(message.channel.name)
+                    hour = int(target_date_with_timezone.hour)
+                    time[hour] = int(time[hour]) + 1
+            
+            listHours = []
+            embed = discord.Embed(title="Server Activity Times", color=0xFF9900)
+            for i in time:
+                    embed.add_field(name=str(i) + ":00", value=str(time[i]), inline=False)
+            embed.set_footer(text="Created by The Invisible Man", icon_url="https://cdn.discordapp.com/avatars/366709133195476992/01cb7c2c7f2007d8b060e084ea4eb6fd.png?size=512")
+            await message.channel.send(embed=embed)
+            print("Completed")
+        else:
+            messageSplit = message.content.split(" ")
+            channelNotif = messageSplit[1].split("#")
+            channelNotifSplit2 = channelNotif[1].split(">")
+            channelID = channelNotifSplit2[0]
+            channel = message.guild.get_channel(int(channelID))
+            async for mess in channel.history(limit=None):
+                    messageTimeUTC = mess.created_at
+                    source_time_zone = pytz.timezone("Etc/UTC")
+                    source_date_with_timezone = source_time_zone.localize(messageTimeUTC)
+                    target_time_zone = est
+                    target_date_with_timezone = source_date_with_timezone.astimezone(target_time_zone)
+                    hour = int(target_date_with_timezone.hour)
+                    time[hour] = int(time[hour]) + 1
+            embed = discord.Embed(title="#" + channel.name + " Activity Times", color=0xFF9900)
+            for i in time:
+                    embed.add_field(name=str(i) + ":00", value=str(time[i]), inline=False)
+            embed.set_footer(text="Created by The Invisible Man", icon_url="https://cdn.discordapp.com/avatars/366709133195476992/01cb7c2c7f2007d8b060e084ea4eb6fd.png?size=512")
+            await oneSec.delete()
+            await message.channel.send(embed=embed)
+            print("Completed")
+    if message.content.startswith('&timeCountAll'):
+        memberList = []
+        for i in client.guilds: 
     
+            print(i.id)
+            for person in i.members:
+                if person not in memberList:
+                    memberList.append(person)
+        number = 1
+        wc = Workbook()
+        wz = Workbook()
+        sheet1 = wc.add_sheet('Sheet 1')
+        sheet1.write(0, 1, "1:00")
+        sheet1.write(0, 2, "2:00")
+        sheet1.write(0, 3, "3:00")
+        sheet1.write(0, 4, "4:00")
+        sheet1.write(0, 5, "5:00")
+        sheet1.write(0, 6, "6:00")
+        sheet1.write(0, 7, "7:00")
+        sheet1.write(0, 8, "8:00")
+        sheet1.write(0, 9, "9:00")
+        sheet1.write(0, 10, "10:00")
+        sheet1.write(0, 11, "11:00")
+        sheet1.write(0, 12, "12:00")
+        sheet1.write(0, 13, "13:00")
+        sheet1.write(0, 14, "14:00")
+        sheet1.write(0, 15, "15:00")
+        sheet1.write(0, 16, "16:00")
+        sheet1.write(0, 17, "17:00")
+        sheet1.write(0, 18, "18:00")
+        sheet1.write(0, 19, "19:00")
+        sheet1.write(0, 20, "20:00")
+        sheet1.write(0, 21, "21:00")
+        sheet1.write(0, 22, "22:00")
+        sheet1.write(0, 23, "23:00")
+        wc.save("TimesMan.xls")
+        wz.save("TimesManName.xls")
+        authorDict = {}
+        for beep in memberList:
+            print(beep.name + ": " + str(beep.id))
+            sheet1.write(number, 0, str(beep.name))
+            number+=1
+        wc.save("TimesMan.xls")
+        wz.save("TimesManName.xls")
+        timesTW = []
+        
+        for z in range(0, 23):
+            newDict = {}
+            for beep in memberList:
+                newDict[beep.name] = 0
+            timesTW.append(newDict)
+        for i in client.guilds:
+            for chan in i.text_channels:   
+                if chan.name != "robot-game" and chan.name != "starfall-private-space" and chan.name != "ca-nerd-squad":
+                    print(i.name + ": " + chan.name) 
+                    async for mess in chan.history(limit=None):
+                        if mess.author in memberList:
+                            messageTimeUTC = mess.created_at
+                            source_time_zone = pytz.timezone("Etc/UTC")
+                            source_date_with_timezone = source_time_zone.localize(messageTimeUTC)
+                            target_time_zone = est
+                            target_date_with_timezone = source_date_with_timezone.astimezone(target_time_zone)
+                            hourEST = int(target_date_with_timezone.hour)
+                            correctDict = timesTW[hourEST - 1]
+                            correctDict[mess.author.name] +=1
+        for i in range(len(timesTW)):
+            for m in range(len(timesTW[i])):
+                rowNum = m + 1
+                curDict = list(timesTW[i].values())
+                print("Value: " + str(curDict[m]))
+                sheet1.write(rowNum, i + 1, curDict[m])
+                
+        wc.save("TimesMan.xls")
+        wz.save("TimesManName.xls")
 
+
+
+
+
+
+
+            
+
+                    
+
+        
+
+
+
+            
+
+               
+
+                
 client.run('NjYyNzg4MTk1NzM3NDAzNDQy.Xg_Dqg.RvP5k1D4dWeg0tqomlXiaHz7QQg')
