@@ -15,6 +15,9 @@ from datetime import date
 from datetime import datetime
 from discord.utils import get
 from openpyxl import load_workbook
+import matplotlib.pyplot as plt
+from PIL import Image
+import numpy as np
 
 wb = Workbook()
 
@@ -27,6 +30,8 @@ def error():
     embed = discord.Embed(title="Error", description="Sorry, something went wrong.", color=0xFF9900)
     embed.set_footer(text="Created by The Invisible Man", icon_url="https://cdn.discordapp.com/avatars/366709133195476992/01cb7c2c7f2007d8b060e084ea4eb6fd.png?size=512")
     return embed
+def findUser(userID):
+    return user
 @client.event
 async def on_ready():
     print('We have logged in as {0.user}'.format(client))
@@ -529,7 +534,7 @@ async def on_message(message):
                     sheetOne.write(j, serverStat.ncols - 1, xlwt.Formula("SUM(" + value1 + ":" + value2 + ")/" + str(delta.days)))
                     wc.save("Complete.xls")
         print("Completed.")
-    if message.content.startswith('&timeCounter') or message.content.startswith('&timecounter'):
+    if message.content.startswith('&timeCounter') and message.author.id == 366709133195476992:
         print("Channel Activity Times request made by " + message.author.name + " at " + str(message.created_at) + " on guild " + message.guild.name)
         oneSec = await message.channel.send("One second, please...")
         time = {
@@ -672,7 +677,53 @@ async def on_message(message):
                 
         wc.save("TimesMan.xls")
         wz.save("TimesManName.xls")
+    if message.content.startswith('&userChart'):
+        user = message.author
+        userID = str(user.id)
+        messageContentList = message.content.split(" ")
+        if len(messageContentList) > 1:
+            userID = 0
+            if messageContentList[1].startswith("<@"): 
+                userPing = messageContentList[1]
+                userPingList = userPing.split('!')
+                userPingThing = userPingList[1].split('>')
+                userID = userPingThing[0]
+            else:
+                userID = messageContentList[1]
+            user = client.get_user(int(userID))
 
+        statBook = xlrd.open_workbook("C:\\Users\\Sebastian_Polge\\OneDrive-CaryAcademy\\Documents\\meNewBot\\Verity\\StatsBot\\TimesMan.xls")
+        statSheet = statBook.sheet_by_index(0)
+        userLoc = -1
+        for i in range(statSheet.nrows):
+            if i != 0:
+                if str(user.id) == statSheet.cell_value(i, 0):
+                    userLoc = i
+        if userLoc == -1:
+            error()
+        objects = ('1:00', '2:00', '3:00', '4:00', '5:00', '6:00', '7:00', '8:00', '9:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00')
+        y_pos = np.arange(len(objects))
+        topNum = 0
+        for i in range(statSheet.ncols):
+            if i != 0:
+                if statSheet.cell_value(userLoc, i) > topNum:
+                    topNum = statSheet.cell_value(userLoc, i)
+        valueSplit = topNum / 5
+        secNum = int(topNum - valueSplit)
+        thirNum = int(secNum - valueSplit)
+        fourNum = int(thirNum - valueSplit)
+        fitNum = int(fourNum - valueSplit)
+        per = [int(statSheet.cell_value(userLoc, 1)), int(statSheet.cell_value(userLoc, 2)), int(statSheet.cell_value(userLoc, 3)), int(statSheet.cell_value(userLoc, 4)), int(statSheet.cell_value(userLoc, 5)), int(statSheet.cell_value(userLoc, 6)), int(statSheet.cell_value(userLoc, 7)), int(statSheet.cell_value(userLoc, 8)), int(statSheet.cell_value(userLoc, 9)), int(statSheet.cell_value(userLoc, 10)), int(statSheet.cell_value(userLoc, 11)), int(statSheet.cell_value(userLoc, 12)), int(statSheet.cell_value(userLoc, 13)), int(statSheet.cell_value(userLoc, 14)), int(statSheet.cell_value(userLoc, 15)), int(statSheet.cell_value(userLoc, 16)), int(statSheet.cell_value(userLoc, 17)), int(statSheet.cell_value(userLoc, 18)), int(statSheet.cell_value(userLoc, 19)), int(statSheet.cell_value(userLoc, 20)), int(statSheet.cell_value(userLoc, 21)), int(statSheet.cell_value(userLoc, 22)), int(statSheet.cell_value(userLoc, 23))]
+        print(str(len(per)) + "/" + str(len(y_pos)))
+        hexColorR = user.color.to_rgb()
+
+        plt.bar(y_pos, per, align='center', alpha=0.5, color=hexColorR)
+        plt.xticks(y_pos, objects)
+        plt.ylabel('Messages')
+        plt.title('Messages Sent per Hour by ' + user.name)
+
+        plt.savefig(user.name + '.png', bbox_inches='tight')
+        plt.show()
 
 
 
