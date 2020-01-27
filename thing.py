@@ -1,8 +1,3 @@
-#To-Do:
-# -Channel Info
-# -Appropriate Error Messages
-# -Move to functions
-
 import discord
 #This imports Discord. Named thing.py because my old bots had their main files in thing.js, and I'm sentimental. 
 import xlrd
@@ -28,6 +23,10 @@ fmt = '%Y-%m-%d %H:%M:%S %Z%z'
 client = discord.Client()
 def error():
     embed = discord.Embed(title="Error", description="Sorry, something went wrong.", color=0xFF9900)
+    embed.set_footer(text="Created by The Invisible Man", icon_url="https://cdn.discordapp.com/avatars/366709133195476992/01cb7c2c7f2007d8b060e084ea4eb6fd.png?size=512")
+    return embed
+def error():
+    embed = discord.Embed(title="Error", description="Sorry, we could not locate the requested user.", color=0xFF9900)
     embed.set_footer(text="Created by The Invisible Man", icon_url="https://cdn.discordapp.com/avatars/366709133195476992/01cb7c2c7f2007d8b060e084ea4eb6fd.png?size=512")
     return embed
 def findUser(userID):
@@ -58,7 +57,7 @@ async def on_message(message):
             user = client.get_user(int(userID))
         
         print("Target username: " + user.name) 
-        print("Target user ID: " + userID) 
+        print("Target user ID: " + str(user.id))
                         
         messageContentList = message.content.split(" ")
         userURL = str(user.avatar_url)
@@ -71,10 +70,10 @@ async def on_message(message):
         mostActiveHour = "-1"
         mostActiveHourNumber = 0
         for i in range(statSheet.nrows):
-            if i != 0 and statSheet.cell_value(i, 0) == str(userID):
+            if i != 0 and statSheet.cell_value(i, 0) == str(user.id):
                 userRow = i
         if userRow == -1:
-            error()
+            errorLOCATE()
         else:
             for i in range(statSheet.ncols):
                 if i != 0:
@@ -416,6 +415,7 @@ async def on_message(message):
         embed.add_field(name="&serverActiveList", value="Get a list of the most active members on the server. Uses total messages sent over time on server.", inline=False)
         embed.add_field(name="&channelInfo", value='Get info on a specific channel. Use the channel' + "'" + 's "ping" to get the channel, or add no other arguements to get the current channel' + "'" + "s info.", inline=False)
         embed.add_field(name="&timeCounter", value='Get activity times on a specific channel. Use the channel' + "'" + 's "ping" to get the channel. YOU WILL NEED TO GIVE IT SOME TIME!', inline=False)
+        embed.add_field(name="&userChart", value='Get a bar graph with the activity times of the user. Either ping the user or use their id.', inline=False)
         embed.set_footer(text="Created by The Invisible Man", icon_url="https://cdn.discordapp.com/avatars/366709133195476992/01cb7c2c7f2007d8b060e084ea4eb6fd.png?size=512")
         await message.channel.send(embed=embed)
     if message.content.startswith('&statCountAllServer') and message.author.id == 366709133195476992:
@@ -534,7 +534,7 @@ async def on_message(message):
                     sheetOne.write(j, serverStat.ncols - 1, xlwt.Formula("SUM(" + value1 + ":" + value2 + ")/" + str(delta.days)))
                     wc.save("Complete.xls")
         print("Completed.")
-    if message.content.startswith('&timeCounter') and message.author.id == 366709133195476992:
+    if message.content.startswith('&timeCounter'):
         print("Channel Activity Times request made by " + message.author.name + " at " + str(message.created_at) + " on guild " + message.guild.name)
         oneSec = await message.channel.send("One second, please...")
         time = {
@@ -603,53 +603,82 @@ async def on_message(message):
             await oneSec.delete()
             await message.channel.send(embed=embed)
             print("Completed")
-    if message.content.startswith('&timeCountAll'):
+    if message.content.startswith('&timeCountAll') and message.author.id == 366709133195476992:
         memberList = []
         for i in client.guilds: 
-    
             print(i.id)
             for person in i.members:
                 if person not in memberList:
                     memberList.append(person)
+        print('Members Finished')
         number = 1
         wc = Workbook()
         wz = Workbook()
         sheet1 = wc.add_sheet('Sheet 1')
-        sheet1.write(0, 1, "1:00")
-        sheet1.write(0, 2, "2:00")
-        sheet1.write(0, 3, "3:00")
-        sheet1.write(0, 4, "4:00")
-        sheet1.write(0, 5, "5:00")
-        sheet1.write(0, 6, "6:00")
-        sheet1.write(0, 7, "7:00")
-        sheet1.write(0, 8, "8:00")
-        sheet1.write(0, 9, "9:00")
-        sheet1.write(0, 10, "10:00")
-        sheet1.write(0, 11, "11:00")
-        sheet1.write(0, 12, "12:00")
-        sheet1.write(0, 13, "13:00")
-        sheet1.write(0, 14, "14:00")
-        sheet1.write(0, 15, "15:00")
-        sheet1.write(0, 16, "16:00")
-        sheet1.write(0, 17, "17:00")
-        sheet1.write(0, 18, "18:00")
-        sheet1.write(0, 19, "19:00")
-        sheet1.write(0, 20, "20:00")
-        sheet1.write(0, 21, "21:00")
-        sheet1.write(0, 22, "22:00")
-        sheet1.write(0, 23, "23:00")
+        sheet2 = wz.add_sheet('Sheet 1')
+        sheet1.write(0, 1, "0:00")
+        sheet1.write(0, 2, "1:00")
+        sheet1.write(0, 3, "2:00")
+        sheet1.write(0, 4, "3:00")
+        sheet1.write(0, 5, "4:00")
+        sheet1.write(0, 6, "5:00")
+        sheet1.write(0, 7, "6:00")
+        sheet1.write(0, 8, "7:00")
+        sheet1.write(0, 9, "8:00")
+        sheet1.write(0, 10, "9:00")
+        sheet1.write(0, 11, "10:00")
+        sheet1.write(0, 12, "11:00")
+        sheet1.write(0, 13, "12:00")
+        sheet1.write(0, 14, "13:00")
+        sheet1.write(0, 15, "14:00")
+        sheet1.write(0, 16, "15:00")
+        sheet1.write(0, 17, "16:00")
+        sheet1.write(0, 18, "17:00")
+        sheet1.write(0, 19, "18:00")
+        sheet1.write(0, 20, "19:00")
+        sheet1.write(0, 21, "20:00")
+        sheet1.write(0, 22, "21:00")
+        sheet1.write(0, 23, "22:00")
+        sheet1.write(0, 24, "23:00")
+
+        sheet2.write(0, 1, "0:00")
+        sheet2.write(0, 2, "1:00")
+        sheet2.write(0, 3, "2:00")
+        sheet2.write(0, 4, "3:00")
+        sheet2.write(0, 5, "4:00")
+        sheet2.write(0, 6, "5:00")
+        sheet2.write(0, 7, "6:00")
+        sheet2.write(0, 8, "7:00")
+        sheet2.write(0, 9, "8:00")
+        sheet2.write(0, 10, "9:00")
+        sheet2.write(0, 11, "10:00")
+        sheet2.write(0, 12, "11:00")
+        sheet2.write(0, 13, "12:00")
+        sheet2.write(0, 14, "13:00")
+        sheet2.write(0, 15, "14:00")
+        sheet2.write(0, 16, "15:00")
+        sheet2.write(0, 17, "16:00")
+        sheet2.write(0, 18, "17:00")
+        sheet2.write(0, 19, "18:00")
+        sheet2.write(0, 20, "19:00")
+        sheet2.write(0, 21, "20:00")
+        sheet2.write(0, 22, "21:00")
+        sheet2.write(0, 23, "22:00")
+        sheet2.write(0, 24, "23:00")
+
         wc.save("TimesMan.xls")
         wz.save("TimesManName.xls")
         authorDict = {}
         for beep in memberList:
             print(beep.name + ": " + str(beep.id))
-            sheet1.write(number, 0, str(beep.name))
+            sheet1.write(number, 0, str(beep.id))
+            sheet2.write(number, 0, str(beep.name))
             number+=1
         wc.save("TimesMan.xls")
         wz.save("TimesManName.xls")
         timesTW = []
         
-        for z in range(0, 23):
+        for z in range(0, 24):
             newDict = {}
             for beep in memberList:
                 newDict[beep.name] = 0
@@ -672,12 +701,15 @@ async def on_message(message):
             for m in range(len(timesTW[i])):
                 rowNum = m + 1
                 curDict = list(timesTW[i].values())
-                print("Value: " + str(curDict[m]))
+                print("Value of Col " + str(i + 1) + ":" + str(curDict[m]))
                 sheet1.write(rowNum, i + 1, curDict[m])
+                sheet2.write(rowNum, i + 1, curDict[m])
+
                 
         wc.save("TimesMan.xls")
         wz.save("TimesManName.xls")
     if message.content.startswith('&userChart'):
+
         user = message.author
         userID = str(user.id)
         messageContentList = message.content.split(" ")
@@ -691,6 +723,7 @@ async def on_message(message):
             else:
                 userID = messageContentList[1]
             user = client.get_user(int(userID))
+        print("User Chart request made by " + message.author.name + " at " + str(message.created_at) + " on guild " + message.guild.name + " for " + user.name)
 
         statBook = xlrd.open_workbook("C:\\Users\\Sebastian_Polge\\OneDrive-CaryAcademy\\Documents\\meNewBot\\Verity\\StatsBot\\TimesMan.xls")
         statSheet = statBook.sheet_by_index(0)
@@ -701,7 +734,7 @@ async def on_message(message):
                     userLoc = i
         if userLoc == -1:
             error()
-        objects = ('1:00', '2:00', '3:00', '4:00', '5:00', '6:00', '7:00', '8:00', '9:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00')
+        objects = ('0:00', '1:00', '2:00', '3:00', '4:00', '5:00', '6:00', '7:00', '8:00', '9:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00')
         y_pos = np.arange(len(objects))
         topNum = 0
         for i in range(statSheet.ncols):
@@ -713,18 +746,26 @@ async def on_message(message):
         thirNum = int(secNum - valueSplit)
         fourNum = int(thirNum - valueSplit)
         fitNum = int(fourNum - valueSplit)
-        per = [int(statSheet.cell_value(userLoc, 1)), int(statSheet.cell_value(userLoc, 2)), int(statSheet.cell_value(userLoc, 3)), int(statSheet.cell_value(userLoc, 4)), int(statSheet.cell_value(userLoc, 5)), int(statSheet.cell_value(userLoc, 6)), int(statSheet.cell_value(userLoc, 7)), int(statSheet.cell_value(userLoc, 8)), int(statSheet.cell_value(userLoc, 9)), int(statSheet.cell_value(userLoc, 10)), int(statSheet.cell_value(userLoc, 11)), int(statSheet.cell_value(userLoc, 12)), int(statSheet.cell_value(userLoc, 13)), int(statSheet.cell_value(userLoc, 14)), int(statSheet.cell_value(userLoc, 15)), int(statSheet.cell_value(userLoc, 16)), int(statSheet.cell_value(userLoc, 17)), int(statSheet.cell_value(userLoc, 18)), int(statSheet.cell_value(userLoc, 19)), int(statSheet.cell_value(userLoc, 20)), int(statSheet.cell_value(userLoc, 21)), int(statSheet.cell_value(userLoc, 22)), int(statSheet.cell_value(userLoc, 23))]
+        per = [int(statSheet.cell_value(userLoc, 1)), int(statSheet.cell_value(userLoc, 2)), int(statSheet.cell_value(userLoc, 3)), int(statSheet.cell_value(userLoc, 4)), int(statSheet.cell_value(userLoc, 5)), int(statSheet.cell_value(userLoc, 6)), int(statSheet.cell_value(userLoc, 7)), int(statSheet.cell_value(userLoc, 8)), int(statSheet.cell_value(userLoc, 9)), int(statSheet.cell_value(userLoc, 10)), int(statSheet.cell_value(userLoc, 11)), int(statSheet.cell_value(userLoc, 12)), int(statSheet.cell_value(userLoc, 13)), int(statSheet.cell_value(userLoc, 14)), int(statSheet.cell_value(userLoc, 15)), int(statSheet.cell_value(userLoc, 16)), int(statSheet.cell_value(userLoc, 17)), int(statSheet.cell_value(userLoc, 18)), int(statSheet.cell_value(userLoc, 19)), int(statSheet.cell_value(userLoc, 20)), int(statSheet.cell_value(userLoc, 21)), int(statSheet.cell_value(userLoc, 22)), int(statSheet.cell_value(userLoc, 23)), int(statSheet.cell_value(userLoc, 24))]
         print(str(len(per)) + "/" + str(len(y_pos)))
-        hexColorR = user.color.to_rgb()
+        colorMember = message.guild.get_member(user.id)
+        print(colorMember.name + ": " + str(colorMember.colour))
+        fig = plt.figure(figsize=(75,50))
+        plt.bar(y_pos, per, align='center', color=str(colorMember.colour))
+        font = {'family' : 'normal',
+        'weight' : 'bold',
+        'size'   : 75}
 
-        plt.bar(y_pos, per, align='center', alpha=0.5, color=hexColorR)
-        plt.xticks(y_pos, objects)
+        plt.rc('font', **font)
+
+        plt.xticks(y_pos, objects, fontsize=50)
+        plt.yticks(fontsize=50)
         plt.ylabel('Messages')
         plt.title('Messages Sent per Hour by ' + user.name)
 
-        plt.savefig(user.name + '.png', bbox_inches='tight')
-        plt.show()
-
+        plt.savefig(user.name + '.png')
+        #plt.show()
+        await message.channel.send(file=discord.File(user.name + '.png'))
 
 
 
