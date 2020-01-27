@@ -709,7 +709,6 @@ async def on_message(message):
         wc.save("TimesMan.xls")
         wz.save("TimesManName.xls")
     if message.content.startswith('&userChart'):
-
         user = message.author
         userID = str(user.id)
         messageContentList = message.content.split(" ")
@@ -752,20 +751,68 @@ async def on_message(message):
         print(colorMember.name + ": " + str(colorMember.colour))
         fig = plt.figure(figsize=(75,50))
         plt.bar(y_pos, per, align='center', color=str(colorMember.colour))
-        font = {'family' : 'normal',
-        'weight' : 'bold',
-        'size'   : 75}
+        font = {'size'   : 75}
 
         plt.rc('font', **font)
 
         plt.xticks(y_pos, objects, fontsize=50)
         plt.yticks(fontsize=50)
         plt.ylabel('Messages')
-        plt.title('Messages Sent per Hour by ' + user.name)
+        plt.title('Total Messages Sent All Time By Hour By ' + user.name)
 
         plt.savefig(user.name + '.png')
         #plt.show()
         await message.channel.send(file=discord.File(user.name + '.png'))
+    if message.content.startswith('&fullChart'):
+        statBook = xlrd.open_workbook("C:\\Users\\Sebastian_Polge\\OneDrive-CaryAcademy\\Documents\\meNewBot\\Verity\\StatsBot\\TimesManName.xls")
+        statSheet = statBook.sheet_by_index(0)
+        peopleStats = []
+        peopleName = []
+        for i in range(statSheet.nrows):
+            if i != 0:
+                perStat = []
+                personName = statSheet.cell_value(i, 0)
+                peopleName.append(personName)
+                for locationNum in range(25):
+                    quant = statSheet.cell_value(i, locationNum)
+                    perStat.append(quant)
+                peopleStats.append(perStat)
+        bars = []
+        for i in peopleStats:
+            bar = i
+            bars.append(bar)
+            
+
+        # set width of bar
+        barWidth = 0.25
+        
+        # set height of bar
+        
+        bars1 = [12, 30, 1, 8, 22, 12, 30, 1, 8, 22]
+        bars2 = [28, 6, 16, 5, 10, 28, 6, 16, 5, 10]
+        bars3 = [29, 3, 24, 25, 17, 29, 3, 24, 25, 17]
+        
+        # Set position of bar on X axis
+        rList = []
+        r = np.arange(24)
+
+        timeThrough = 1
+        for i in bars:
+            R = [x + barWidth for x in r]
+            rList.append(r)
+
+        # Make the plot
+        for i in range(len(bars)):
+            plt.bar(rList[i], bars[i], color='#7f6d5f', width=barWidth, edgecolor='black')
+        
+        
+        # Add xticks on the middle of the group bars
+        plt.xlabel('People')
+        plt.xticks([r + barWidth for r in range(len(bars1))], ['A', 'B', 'C', 'D', 'E', 'A', 'B', 'C', 'D', 'E'])
+        
+        # Create legend & Show graphic
+        plt.legend()
+        plt.show()
 
 
 
