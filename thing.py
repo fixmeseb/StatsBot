@@ -418,7 +418,26 @@ async def on_message(message):
         embed.add_field(name="&userChart", value='Get a bar graph with the activity times of the user. Either ping the user or use their id.', inline=False)
         embed.set_footer(text="Created by The Invisible Man", icon_url="https://cdn.discordapp.com/avatars/366709133195476992/01cb7c2c7f2007d8b060e084ea4eb6fd.png?size=512")
         await message.channel.send(embed=embed)
+    if message.content.startswith("&helpSpecial") and message.author.id == 366709133195476992:
+        print("Special help request made by " + message.author.name + " at " + str(message.created_at) + " on guild " + message.guild.name)
+        embed = discord.Embed(title="Special Help", description="Hello, I'm StatBot! Here are some of my functions: ", color=0xFF9900)
+        embed.add_field(name="&userInfo", value="Get information on a user. Either use the user's id or ping the user.", inline=False)
+        embed.add_field(name="&serverInfo", value="Get information on the server.", inline=False)
+        embed.add_field(name="&serverActiveList", value="Get a list of the most active members on the server. Uses total messages sent over time on server.", inline=False)
+        embed.add_field(name="&channelInfo", value='Get info on a specific channel. Use the channel' + "'" + 's "ping" to get the channel, or add no other arguements to get the current channel' + "'" + "s info.", inline=False)
+        embed.add_field(name="&timeCounter", value='Get activity times on a specific channel. Use the channel' + "'" + 's "ping" to get the channel. YOU WILL NEED TO GIVE IT SOME TIME!', inline=False)
+        embed.add_field(name="&userChart", value='Get a bar graph with the activity times of the user. Either ping the user or use their id.', inline=False)
+        embed.add_field(name="&statCountAllServer", value='Count the server message stats on each server into seperate excel sheets. (Invisible Man Only)', inline=False)
+        embed.add_field(name="&updateComplete", value='Combine all those multiple pesky server excel sheets into Complete.xls! (Invisible Man Only)', inline=False)
+        embed.add_field(name="&timeCountAll", value='Get activity times on every server! (Invisible Man Only)', inline=False)
+        embed.set_footer(text="Created by The Invisible Man", icon_url="https://cdn.discordapp.com/avatars/366709133195476992/01cb7c2c7f2007d8b060e084ea4eb6fd.png?size=512")
+        await message.channel.send(embed=embed)
     if message.content.startswith('&statCountAllServer') and message.author.id == 366709133195476992:
+        statIgnore = open("optOut.txt", "r")
+        
+        guildCount = 1
+        otherGuildCount = 1
+        guildTotal = len(client.guilds)
         for serverActive in client.guilds:
             #await message.channel.send("Server:" + serverActive.name)
             wb = Workbook()
@@ -440,7 +459,8 @@ async def on_message(message):
                     x+=1
                     print("Added #" + channel.name)
             wb.save(serverActive.name + ".xls")
-            server = serverActive.text_channels       
+            server = serverActive.text_channels  
+            channelNumberIc = 1 
             for channel in server:
                 if channel.name != "robot-game" and channel.name != "starfall-private-space" and channel.name != "ca-nerd-squad" and channel.name != "vent":
                     y = 1
@@ -448,6 +468,7 @@ async def on_message(message):
                     }
                     for member in memberList:
                         authorMessageQuant[str(member.id)] = 0
+                    print(str(channelNumberIc) + "/" + str(channelQuant) + "; " + str(otherGuildCount) + "/" + str(guildTotal) + " #" + channel.name)
                     async for message in channel.history(limit=None):
                         for member in memberList:
                             if member.name == message.author.name:
@@ -465,11 +486,15 @@ async def on_message(message):
                             if sheet.cell_value(mStuff,0) == member:
                                 print("Author is found!" + sheet.cell_value(mStuff, 0) + "/" + member) 
                                 x = mStuff
-                        print(str(x) + "/" + str(memberQuant) + ";" + str(y) + "/" + str(channelQuant) + " #" + str(channel.name))
+                        print(str(x) + "/" + str(memberQuant) + "; " + str(y) + "/" + str(channelQuant) + "; " + str(guildCount) + "/" + str(guildTotal) + " #" + str(channel.name))
                         messageCount = authorMessageQuant[member]
                         sheet1.write(x, y, int(messageCount))
                         zed = y + 1
-                        wb.save(message.guild.name + ".xls")
+                        s = message.guild.name
+                        if s == "Cary Academy D&D- A Band of Fools" or s == "Cary Academy D&D- A Band of Fools":
+                            s = "Cary Academy DnD"
+                        wb.save(s + ".xls")
+                channelNumberIc+=1
             x = 1
             sheet1.write(0, zed, "Message Total:")
             sheet1.write(0, zed + 1, "Date Joined:")
@@ -499,15 +524,24 @@ async def on_message(message):
                 sheet1.write(x, zed + 3, xlwt.Formula("SUM(" + value1 + ":" + value2 + ")/" + str(delta.days))) 
                 print("Zed: " + str(zed) + ", x: " + str(x))
                 x+=1
-            wb.save(serverActive.name + ".xls")
+            s = serverActive.name
+            if s == "Cary Academy D&D- A Band of Fools" or s == "Cary Academy D&D- A Band of Fools":
+                s = "Cary Academy DnD"
+            wb.save(s + ".xls")
             print("Complete!")
+            guildCount+=1
+            otherGuildCount +=1
     if message.content.startswith('&updateComplete') and message.author.id == 366709133195476992:
         wc = Workbook()
         for serverActive in client.guilds:
             rb = xlrd.open_workbook("C:\\Users\\Sebastian_Polge\\OneDrive-CaryAcademy\\Documents\\meNewBot\\Verity\\StatsBot\\Complete.xls") 
-            serverStatBook = xlrd.open_workbook("C:\\Users\\Sebastian_Polge\\OneDrive-CaryAcademy\\Documents\\meNewBot\\Verity\\StatsBot\\" + serverActive.name + ".xls") 
+            s = serverActive.name
+            print("WorkBook Name: " + '"' + serverActive.name + '"')
+            if s == "Cary Academy D&D- A Band of Fools" or s == "Cary Academy D&D- A Band of Fools":
+                s = "Cary Academy DnD"
+            serverStatBook = xlrd.open_workbook("C:\\Users\\Sebastian_Polge\\OneDrive-CaryAcademy\\Documents\\meNewBot\\Verity\\StatsBot\\" + s + ".xls") 
             serverStat = serverStatBook.sheet_by_index(0)
-            sheetOne = wc.add_sheet(serverActive.name)
+            sheetOne = wc.add_sheet(s)
             for i in range(serverStat.ncols):
                 for j in range(serverStat.nrows):
                     if i != serverStat.ncols - 1 and i != serverStat.ncols - 4:
@@ -523,8 +557,9 @@ async def on_message(message):
                     value2 = string + str(j + 1)
                     formula = "SUM(" + value1 + ":" + value2 + ")"
                     sheetOne.write(j, serverStat.ncols - 4, xlwt.Formula(formula))
-                    print("Formula: " + formula)
-                    print("name: " + serverStat.cell_value(j,0))
+                    #print("Formula: " + formula)
+                    user = client.get_user(int(serverStat.cell_value(j,0)))
+                    print(user.name + " (" + str(user.id) + ")")
                     member = serverActive.get_member(int(serverStat.cell_value(j,0)))
                     dateTimeFull = member.joined_at
                     dateJoined = datetime.date(dateTimeFull)
@@ -606,7 +641,7 @@ async def on_message(message):
     if message.content.startswith('&timeCountAll') and message.author.id == 366709133195476992:
         memberList = []
         for i in client.guilds: 
-            print(i.id)
+            print(i.name + "(" + str(i.id) + ")")
             for person in i.members:
                 if person not in memberList:
                     memberList.append(person)
@@ -670,7 +705,7 @@ async def on_message(message):
         wz.save("TimesManName.xls")
         authorDict = {}
         for beep in memberList:
-            print(beep.name + ": " + str(beep.id))
+            print(beep.name + "(" + str(beep.id) + ")")
             sheet1.write(number, 0, str(beep.id))
             sheet2.write(number, 0, str(beep.name))
             number+=1
@@ -683,10 +718,12 @@ async def on_message(message):
             for beep in memberList:
                 newDict[beep.name] = 0
             timesTW.append(newDict)
+        guildNumber = 1
         for i in client.guilds:
+            channelNumber = 1
             for chan in i.text_channels:   
                 if chan.name != "robot-game" and chan.name != "starfall-private-space" and chan.name != "ca-nerd-squad":
-                    print(i.name + ": " + chan.name) 
+                    print(i.name + "; " + str(guildNumber) + "/" + str(len(client.guilds)) + ": " + chan.name + "; " + str(channelNumber) + "/" + str(len(i.text_channels))) 
                     async for mess in chan.history(limit=None):
                         if mess.author in memberList:
                             messageTimeUTC = mess.created_at
@@ -697,15 +734,15 @@ async def on_message(message):
                             hourEST = int(target_date_with_timezone.hour)
                             correctDict = timesTW[hourEST - 1]
                             correctDict[mess.author.name] +=1
+                    channelNumber+=1
+            guildNumber+=1
         for i in range(len(timesTW)):
             for m in range(len(timesTW[i])):
                 rowNum = m + 1
                 curDict = list(timesTW[i].values())
                 print("Value of Col " + str(i + 1) + ":" + str(curDict[m]))
                 sheet1.write(rowNum, i + 1, curDict[m])
-                sheet2.write(rowNum, i + 1, curDict[m])
-
-                
+                sheet2.write(rowNum, i + 1, curDict[m])       
         wc.save("TimesMan.xls")
         wz.save("TimesManName.xls")
     if message.content.startswith('&userChart'):
@@ -759,10 +796,15 @@ async def on_message(message):
         plt.yticks(fontsize=50)
         plt.ylabel('Messages')
         plt.title('Total Messages Sent All Time By Hour By ' + user.name)
-
-        plt.savefig(user.name + '.png')
+        if user.name != ".| Sunny |.":
+            plt.savefig(user.name + '.png')
+        else:
+            plt.savefig('Sunny.png')
         #plt.show()
-        await message.channel.send(file=discord.File(user.name + '.png'))
+        if user.name != ".| Sunny |.":
+            await message.channel.send(file=discord.File(user.name + '.png'))
+        else:
+            await message.channel.send(file=discord.File('Sunny.png'))
     if message.content.startswith('&fullChart'):
         statBook = xlrd.open_workbook("C:\\Users\\Sebastian_Polge\\OneDrive-CaryAcademy\\Documents\\meNewBot\\Verity\\StatsBot\\TimesManName.xls")
         statSheet = statBook.sheet_by_index(0)
@@ -774,12 +816,15 @@ async def on_message(message):
                 personName = statSheet.cell_value(i, 0)
                 peopleName.append(personName)
                 for locationNum in range(25):
-                    quant = statSheet.cell_value(i, locationNum)
-                    perStat.append(quant)
+                    if locationNum != 0:
+                        quant = statSheet.cell_value(i, locationNum)
+                        print("Quant of " + str(locationNum) + ": " + str(quant))
+                        perStat.append(quant)
                 peopleStats.append(perStat)
         bars = []
         for i in peopleStats:
             bar = i
+            print("Bar: " + str(bar))
             bars.append(bar)
             
 
@@ -794,26 +839,57 @@ async def on_message(message):
         
         # Set position of bar on X axis
         rList = []
-        r = np.arange(24)
-
+        r1 = np.arange(24)
+        lastR = r1
         timeThrough = 1
         for i in bars:
-            R = [x + barWidth for x in r]
-            rList.append(r)
+            R = [x + barWidth + 25 for x in lastR]
+            rList.append(R)
+            lastR = R
 
         # Make the plot
+        import random
+        color = []
+        fig = plt.figure(figsize=(300,100))
+        lastColor = "#557f2d"
         for i in range(len(bars)):
-            plt.bar(rList[i], bars[i], color='#7f6d5f', width=barWidth, edgecolor='black')
+            print(rList[i])
+            print(bars[i])
+            if lastColor == "#557f2d":
+                plt.bar(rList[i], bars[i], color='#7f6d5f', width=barWidth)
+                lastColor = '#7f6d5f'
+            else:
+                plt.bar(rList[i], bars[i], color="#557f2d", width=barWidth)
+                lastColor = "#557f2d"
+
         
         
         # Add xticks on the middle of the group bars
         plt.xlabel('People')
-        plt.xticks([r + barWidth for r in range(len(bars1))], ['A', 'B', 'C', 'D', 'E', 'A', 'B', 'C', 'D', 'E'])
+        plt.xticks([x + barWidth + 25 for x in lastR], peopleName)
+        
         
         # Create legend & Show graphic
-        plt.legend()
         plt.show()
-
+    if message.content.startswith('&goodbyeToStatBot'):
+        DnD = client.get_channel(474385207999463435)
+        CADiscord = client.get_channel(524454096355459072)
+        Level99 = client.get_channel(620788039911735332)
+        Starserver = client.get_channel(621848134980730881)
+        CoolPeeps = client.get_channel(364116594324013087)
+        #await DnD.send("```After careful consideration and some complaints brought up by certain people about how StatBot collects data, I have decided to retire the bot, and delete all the associated data files. If anyone is particularly upset about the loss, thanks for your support, and send any messages to me at The Invisible Man#7937.``` -The Invisible Man.")
+        #await DnD.send("Farewell to all, and to all a goodnight!")
+        #await CADiscord.send("```After careful consideration and some complaints brought up by certain people about how StatBot collects data, I have decided to retire the bot, and delete all the associated data files. If anyone is particularly upset about the loss, thanks for your support, and send any messages to me at The Invisible Man#7937.``` -The Invisible Man.")
+        #await CADiscord.send("Farewell to all, and to all a goodnight!")
+        #await Level99.send("```After careful consideration and some complaints brought up by certain people about how StatBot collects data, I have decided to retire the bot, and delete all the associated data files. If anyone is particularly upset about the loss, thanks for your support, and send any messages to me at The Invisible Man#7937.``` -The Invisible Man.")
+        #await Level99.send("Farewell to all, and to all a goodnight!")
+        #await Starserver.send("```After careful consideration and some complaints brought up by certain people about how StatBot collects data, I have decided to retire the bot, and delete all the associated data files. If anyone is particularly upset about the loss, thanks for your support, and send any messages to me at The Invisible Man#7937.``` -The Invisible Man.")
+        #await Starserver.send("Farewell to all, and to all a goodnight!")
+        await CoolPeeps.send("```After careful consideration and some complaints brought up by certain people about how StatBot collects data, I have decided to retire the bot, and delete all the associated data files. If anyone is particularly upset about the loss, thanks for your support, and send any messages to me at The Invisible Man#7937.``` -The Invisible Man.")
+        await CoolPeeps.send("Farewell to all, and to all a good night!")
+        for i in client.guilds:
+            if i.name != "test server":
+                await i.leave()
 
 
 
