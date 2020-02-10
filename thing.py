@@ -31,6 +31,25 @@ def error():
     return embed
 def findUser(userID):
     return user
+def getUserOptLevel(userID):
+    optSheets = open("optSheets.txt", "r")
+    optString = optSheets.read()
+    optList = optString.split('\n')
+    counter = -2
+    for opt in optList:
+        optFile = open(opt + ".txt", "r")
+        print("Opened " + opt + ".txt")
+        optString = optFile.read()
+        optArray = optString.split("\n")
+        for item in optArray:
+            print("Item: " + item)
+        if str(userID) in optArray:
+            print(str(userID) + "'s opt level is " + str(counter))
+            return counter
+        else:
+            counter+=1
+    return -5
+            
 @client.event
 async def on_ready():
     print('We have logged in as {0.user}'.format(client))
@@ -40,6 +59,18 @@ async def on_ready():
 async def on_message(message):
     if message.author == client.user:
         return
+    if message.content.startswith("&optHelp"):
+        print("OptHelp request made by " + message.author.name + " at " + str(message.created_at) + " on guild " + message.guild.name)
+        userOptLevel = getUserOptLevel(message.author.id)
+        userOpt = "Your current Opt Level is " + str(userOptLevel) + "."
+        embed = discord.Embed(title="OptHelp", description=userOpt, color=0xFF9900)
+        embed.add_field(name="&optLevel -2", value="No information is collected at any point on the user.", inline=False)
+        embed.add_field(name="&optLevel -1", value="Information is collected in real time, but only available to the user. Anonymus Data is collected for server/channel statistics.", inline=False)
+        embed.add_field(name="&optLevel 0", value="Anonymus Data is collected on the user; commands can be accessed by anyone, but count in real time.", inline=False)
+        embed.add_field(name="&optLevel 1", value="Data is collected in spreadsheets, but only accesible by the user.", inline=False)
+        embed.add_field(name="&optLevel 2", value="Data is collected; accessible by anyone.", inline=False)
+        embed.set_footer(text="Created by The Invisible Man", icon_url="https://cdn.discordapp.com/avatars/366709133195476992/01cb7c2c7f2007d8b060e084ea4eb6fd.png?size=512")
+        await message.channel.send(embed=embed)
     if message.content.startswith('&userInfo') or message.content.startswith('&userinfo'):
         print("User Info request made by " + message.author.name + " at " + str(message.created_at) + " on guild " + message.guild.name)
         user = message.author
@@ -433,21 +464,39 @@ async def on_message(message):
         embed.set_footer(text="Created by The Invisible Man", icon_url="https://cdn.discordapp.com/avatars/366709133195476992/01cb7c2c7f2007d8b060e084ea4eb6fd.png?size=512")
         await message.channel.send(embed=embed)
     if message.content.startswith('&statCountAllServer') and message.author.id == 366709133195476992:         
+        optAllowed = []
         guildCount = 1
         otherGuildCount = 1
         guildTotal = len(client.guilds)
         for serverActive in client.guilds:
-            #await message.channel.send("Server:" + serverActive.name)
             wb = Workbook()
             sheet1 = wb.add_sheet('Sheet 1')
             i = 1
             zed = 0
+            if serverActive.name == "Starserver":
+                zed-=3
             memberList = serverActive.members
             memberQuant = len(memberList)
             for member in memberList:
-                sheet1.write(i, 0, str(member.id))
-                i+=1
-                print("Added " + member.name + "(" + str(member.id) + ")")
+                userOptLevel = getUserOptLevel(member.id)
+                if userOptLevel == -5 and member.bot == False:
+                    print("Added " + member.name + " to default optLevel.")
+                    defaultOpt = open("opt0.txt", "a")
+                    defaultOpt.write("\n" + str(member.id))
+                    userOptLevel = 0
+                if member.bot == True:
+                    print("Added " + member.name + " to default optLevel for bots.")
+                    defaultOpt = open("opt2.txt", "a")
+                    defaultOpt.write("\n" + str(member.id))
+                    userOptLevel = 2
+                if userOptLevel >= 1:
+                    optAllowed.append(member.id)
+                    sheet1.write(i, 0, str(member.id))
+                    i+=1
+                    print("Added " + member.name + "(" + str(member.id) + ") (opt level " + str(userOptLevel) + ").")
+                else:
+                    print(member.name + "(" + str(member.id) + ") has an optLevel of " + str(userOptLevel))
+                wb.save(serverActive.name + ".xls")
             channelList = serverActive.text_channels
             channelQuant = len(channelList)
             x = 1
@@ -470,7 +519,6 @@ async def on_message(message):
                     async for message in channel.history(limit=None):
                         for member in memberList:
                             if member.name == message.author.name:
-                                #print("Found author!")
                                 authorMessageQuant[str(member.id)] = str(int(authorMessageQuant[str(member.id)])+ 1)
                     wr = xlrd.open_workbook("C:\\Users\\Sebastian_Polge\\OneDrive-CaryAcademy\\Documents\\meNewBot\\Verity\\StatsBot\\" + serverActive.name + ".xls") 
                     sheet = wr.sheet_by_index(0) 
@@ -481,47 +529,54 @@ async def on_message(message):
                     for member in authorMessageQuant:
                         x = 1
                         for mStuff in range(sheet.nrows):
-                            if sheet.cell_value(mStuff,0) == member:
+                            if sheet.cell_value(mStuff, 0) == member:
                                 print("Author is found!" + sheet.cell_value(mStuff, 0) + "/" + member) 
                                 x = mStuff
-                        print(str(x) + "/" + str(memberQuant) + "; " + str(y) + "/" + str(channelQuant) + "; " + str(guildCount) + "/" + str(guildTotal) + " #" + str(channel.name))
                         messageCount = authorMessageQuant[member]
-                        sheet1.write(x, y, int(messageCount))
-                        zed = y + 1
+                        for i in optAllowed:
+                            print(str(member) + "/" + str(i))
+                        if int(member) in optAllowed:
+                            print(sheet.cell_value(x, 0) + " opted in")
+                            print(str(x) + "/" + str(memberQuant) + "; " + str(y) + "/" + str(channelQuant) + "; " + str(guildCount) + "/" + str(guildTotal) + " #" + str(channel.name))
+                            sheet1.write(x, y, int(messageCount))
+                            zed = y + 1
                         s = message.guild.name
                         if s == "Cary Academy D&D- A Band of Fools" or s == "Cary Academy D&D- A Band of Fools":
                             s = "Cary Academy DnD"
                         wb.save(s + ".xls")
                 channelNumberIc+=1
+                print("Completed channel #" + channel.name)
             x = 1
+            print("Zed = " + str(zed))
             sheet1.write(0, zed, "Message Total:")
             sheet1.write(0, zed + 1, "Date Joined:")
             sheet1.write(0, zed + 2, "Days on Server:")
             sheet1.write(0, zed + 3, "Message Average:")
             for member in memberList:
-                string = ""
-                n = y
-                while n > 0:
-                    n, remainder = divmod(n - 1, 26)
-                    string = chr(65 + remainder) + string
-                print(string)
-                value1 = "B" + str(x + 1)
-                value2 = string + str(x + 1)
-                sheet1.write(x, zed, xlwt.Formula("SUM(" + value1 + ":" + value2 + ")"))
-                print("Zed: " + str(zed) + ", x: " + str(x))
-                dateTimeFull = member.joined_at
-                dateTimeSplit = str(dateTimeFull).split()
-                sheet1.write(x, zed + 1, dateTimeSplit[0])
-                print("Zed: " + str(zed) + ", x: " + str(x))
-                dateTimeFull = member.joined_at
-                dateJoined = datetime.date(dateTimeFull)
-                dateTimeSplit = str(dateTimeFull).split()
-                currentDate = datetime.date(datetime.now())
-                delta = currentDate - dateJoined
-                sheet1.write(x, zed + 2, delta.days)
-                sheet1.write(x, zed + 3, xlwt.Formula("SUM(" + value1 + ":" + value2 + ")/" + str(delta.days))) 
-                print("Zed: " + str(zed) + ", x: " + str(x))
-                x+=1
+                if member.id in optAllowed:
+                    string = ""
+                    n = y
+                    while n > 0:
+                        n, remainder = divmod(n - 1, 26)
+                        string = chr(65 + remainder) + string
+                    print(string)
+                    value1 = "B" + str(x + 1)
+                    value2 = string + str(x + 1)
+                    sheet1.write(x, zed, xlwt.Formula("SUM(" + value1 + ":" + value2 + ")"))
+                    print("Zed: " + str(zed) + ", x: " + str(x))
+                    dateTimeFull = member.joined_at
+                    dateTimeSplit = str(dateTimeFull).split()
+                    sheet1.write(x, zed + 1, dateTimeSplit[0])
+                    print("Zed: " + str(zed) + ", x: " + str(x))
+                    dateTimeFull = member.joined_at
+                    dateJoined = datetime.date(dateTimeFull)
+                    dateTimeSplit = str(dateTimeFull).split()
+                    currentDate = datetime.date(datetime.now())
+                    delta = currentDate - dateJoined
+                    sheet1.write(x, zed + 2, delta.days)
+                    sheet1.write(x, zed + 3, xlwt.Formula("SUM(" + value1 + ":" + value2 + ")/" + str(delta.days))) 
+                    print("Zed: " + str(zed) + ", x: " + str(x))
+                    x+=1
             s = serverActive.name
             if s == "Cary Academy D&D- A Band of Fools" or s == "Cary Academy D&D- A Band of Fools":
                 s = "Cary Academy DnD"
