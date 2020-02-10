@@ -432,9 +432,7 @@ async def on_message(message):
         embed.add_field(name="&timeCountAll", value='Get activity times on every server! (Invisible Man Only)', inline=False)
         embed.set_footer(text="Created by The Invisible Man", icon_url="https://cdn.discordapp.com/avatars/366709133195476992/01cb7c2c7f2007d8b060e084ea4eb6fd.png?size=512")
         await message.channel.send(embed=embed)
-    if message.content.startswith('&statCountAllServer') and message.author.id == 366709133195476992:
-        statIgnore = open("optOut.txt", "r")
-        
+    if message.content.startswith('&statCountAllServer') and message.author.id == 366709133195476992:         
         guildCount = 1
         otherGuildCount = 1
         guildTotal = len(client.guilds)
