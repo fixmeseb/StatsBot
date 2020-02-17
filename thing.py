@@ -42,8 +42,6 @@ def getUserOptLevel(userID):
         #print("Opened " + opt + ".txt")
         optString = optFile.read()
         optArray = optString.split("\n")
-        for item in optArray:
-            #print("Item: " + item)
         if str(userID) in optArray:
             print(str(userID) + "'s opt level is " + str(counter))
             return counter
@@ -497,6 +495,7 @@ async def on_message(message):
         await message.channel.send(embed=embed)
     if message.content.startswith('&statCountAllServer') and message.author.id == 366709133195476992:
         optAllowed = []
+        anonAllowed = []
         guildCount = 1
         otherGuildCount = 1
         guildTotal = len(client.guilds)
@@ -521,6 +520,8 @@ async def on_message(message):
                     defaultOpt = open("opt2.txt", "a")
                     defaultOpt.write("\n" + str(member.id))
                     userOptLevel = 2
+                if userOptLevel >= 0:
+                    anonAllowed.append(member.id)
                 if userOptLevel >= 1:
                     optAllowed.append(member.id)
                     sheet1.write(i, 0, str(member.id))
@@ -529,6 +530,7 @@ async def on_message(message):
                 else:
                     print(member.name + "(" + str(member.id) + ") has an optLevel of " + str(userOptLevel))
                 wb.save(serverActive.name + ".xls")
+                sheet1.write(i, 0, "Anonymus")
             channelList = serverActive.text_channels
             channelQuant = len(channelList)
             x = 1
@@ -558,6 +560,7 @@ async def on_message(message):
                         if sheet.cell_value(0,stuff) == channel.name:
                             print("Channel is found!") 
                             y = stuff
+                    anonTotal = 0
                     for member in authorMessageQuant:
                         x = 1
                         for mStuff in range(sheet.nrows):
@@ -572,12 +575,16 @@ async def on_message(message):
                             print(str(x) + "/" + str(memberQuant) + "; " + str(y) + "/" + str(channelQuant) + "; " + str(guildCount) + "/" + str(guildTotal) + " #" + str(channel.name))
                             sheet1.write(x, y, int(messageCount))
                             zed = y + 1
+                        if int(member) in anonAllowed:
+                            anonTotal+=int(messageCount)
                         s = message.guild.name
                         if s == "Cary Academy D&D- A Band of Fools" or s == "Cary Academy D&D- A Band of Fools":
                             s = "Cary Academy DnD"
                         wb.save(s + ".xls")
                 channelNumberIc+=1
+                sheet1.write(x+1,y,anonTotal)
                 print("Completed channel #" + channel.name)
+                
             x = 1
             print("Zed = " + str(zed))
             sheet1.write(0, zed, "Message Total:")
@@ -616,6 +623,7 @@ async def on_message(message):
             print("Complete!")
             guildCount+=1
             otherGuildCount +=1
+        await client.send_message(message.author, "Completed " + server.name)
     if message.content.startswith('&updateComplete') and message.author.id == 366709133195476992:
         wc = Workbook()
         for serverActive in client.guilds:
