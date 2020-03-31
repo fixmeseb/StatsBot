@@ -10,6 +10,7 @@ from datetime import date
 from datetime import datetime
 from discord.utils import get
 from openpyxl import load_workbook
+import time
 import matplotlib.pyplot as plt
 from PIL import Image
 import numpy as np
@@ -26,20 +27,19 @@ def error():
     embed = discord.Embed(title="Error", description="Sorry, something went wrong.", color=0xFF9900)
     embed.set_footer(text="Created by The Invisible Man", icon_url="https://cdn.discordapp.com/avatars/366709133195476992/01cb7c2c7f2007d8b060e084ea4eb6fd.png?size=512")
     return embed
-def error():
+def errorLOCATE():
     embed = discord.Embed(title="Error", description="Sorry, we could not locate the requested user.", color=0xFF9900)
     embed.set_footer(text="Created by The Invisible Man", icon_url="https://cdn.discordapp.com/avatars/366709133195476992/01cb7c2c7f2007d8b060e084ea4eb6fd.png?size=512")
     return embed
 def findUser(userID):
-    return user
+    return client.get_user(int(userID))
 def getUserOptLevel(userID):
     optSheets = open("optSheets.txt", "r")
     optString = optSheets.read()
     optList = optString.split('\n')
-    counter = -2
+    counter = -1
     for opt in optList:
         optFile = open(opt + ".txt", "r")
-        #print("Opened " + opt + ".txt")
         optString = optFile.read()
         optArray = optString.split("\n")
         if str(userID) in optArray:
@@ -63,10 +63,10 @@ async def on_message(message):
         userOptLevel = getUserOptLevel(message.author.id)
         userOpt = "Your current Opt Level is " + str(userOptLevel) + "."
         embed = discord.Embed(title="OptHelp", description=userOpt, color=0xFF9900)
-        embed.add_field(name="&optLevel -1", value="No information is collected at any point on the user.", inline=False)
-        embed.add_field(name="&optLevel 0", value="Anonymus Data is collected on the user.", inline=False)
-        embed.add_field(name="&optLevel 1", value="Data is collected in spreadsheets, but only accesible by the user.", inline=False)
-        embed.add_field(name="&optLevel 2", value="Data is collected; accessible by anyone.", inline=False)
+        embed.add_field(name="&optLevel -1", value="No information is collected at any point on the user. Cannot use commands.", inline=False)
+        embed.add_field(name="&optLevel 0", value="Anonymus Data is collected on the user. Can use anonymus commands.", inline=False)
+        embed.add_field(name="&optLevel 1", value="Data is collected in spreadsheets, but only accesible by the user. Can use all commands on self, but not on other users.", inline=False)
+        embed.add_field(name="&optLevel 2", value="Data is collected; accessible by anyone. Can use all commands.", inline=False)
         embed.set_footer(text="Created by The Invisible Man", icon_url="https://cdn.discordapp.com/avatars/366709133195476992/01cb7c2c7f2007d8b060e084ea4eb6fd.png?size=512")
         await message.channel.send(embed=embed)
     if message.content.startswith("&optLevel"):
@@ -81,24 +81,29 @@ async def on_message(message):
         if optLevelDesired == userOptLevel:
             await message.channel.send("You already are this level!")
         else:
-            optFileNewName = "opt" + str(optLevelDesired) + ".txt"
-            optFileAdd = open(optFileNewName, "a")
-            optFileAdd.write("\n" + str(user.id))
-            optFileAdd.close()
-            optFileOldName = "opt" + str(userOptLevel) + ".txt"
-            optFileRemove = open(optFileOldName, "r")
-            optString = optFileRemove.read()
-            optArray = optString.split("\n")
-            optArray.remove(str(user.id))
-            opt = ""
-            for item in optArray:
-                opt = "\n" + item
-            optFull = opt[1:len(opt)]
-            optFileRemove.close()
-            optFileWrite = open(optFileOldName, "w")
-            optFileWrite.write(optFull)
-            print("Opt Full: " + optFull)
-            optFileWrite.close()
+            if userOptLevel != -5:
+                optLevelCurrent = open("opt" + str(userOptLevel) + ".txt", "r")
+                currentOptLevelString = optLevelCurrent.read()
+                currentOptLevelArray = currentOptLevelString.split("\n")
+                print("Booglybooglyboo")
+                if str(user.id) in currentOptLevelArray:
+                    currentOptLevelArray.remove(str(user.id))
+                    print("Removed the id.")
+                if str(user.id) in currentOptLevelArray:
+                    print("The id's still there!")
+                optLevelCurrent.close()
+                optLevelCurrent = open("opt" + str(userOptLevel) + ".txt", "w")
+                optLevelCurrentString = ""
+                for item in currentOptLevelArray:
+                    optLevelCurrentString = optLevelCurrentString + "\n" + item
+                optLevelCurrent.write(optLevelCurrentString)
+                optLevelCurrent.close()
+            optLevelNew = open("opt" + str(optLevelDesired) + ".txt", "r")
+            optLevelNewString = optLevelNew.read()
+            optLevelNew.close()
+            optLevelNew = open("opt" + str(optLevelDesired) + ".txt", "w")
+            optLevelNewString = optLevelNewString + "\n" + str(user.id)
+            optLevelNew.write(optLevelNewString)
             await message.channel.send("Changed <@" + str(user.id)   + ">'s opt level to " + str(optLevelDesired) + ".")
     if message.content.startswith('&userInfo') or message.content.startswith('&userinfo'):
         print("User Info request made by " + message.author.name + " at " + str(message.created_at) + " on guild " + message.guild.name)
@@ -214,77 +219,82 @@ async def on_message(message):
                 embed = error()
                 await message.channel.send(embed=embed)
     if message.content.startswith('&serverInfo') or message.content.startswith("&serverinfo"):
+        userOptLevel = getUserOptLevel(message.author.id)
         print("Server Info request made by " + message.author.name + " at " + str(message.created_at) + " for guild " + message.guild.name)
-        wz = xlrd.open_workbook("C:\\Users\\Sebastian_Polge\\OneDrive-CaryAcademy\\Documents\\meNewBot\\Verity\\StatsBot\\Complete.xls")
-        guildSheet = wz.sheet_by_name(message.guild.name)
-        positionOfTotalColumn = guildSheet.ncols - 4
-        positionOfAverageMessage = guildSheet.ncols -1
-        activeMember = ""
-        activeMemberActivity = 0
-        activeMemberNoCount = ""
-        activeMemberNoCountNum = 0
-        totalMessages = 0
-        for i in range(guildSheet.nrows):
-            if (i != 0):
-                totalMessages += guildSheet.cell_value(i, positionOfTotalColumn)
-                if (guildSheet.cell_value(i, positionOfAverageMessage) > activeMemberActivity):
-                    activeMemberActivity = guildSheet.cell_value(i, positionOfAverageMessage)
-                    activeMemberID = guildSheet.cell_value(i, 0)
-                    activeMember = message.guild.get_member(int(activeMemberID))
-        for i in range(guildSheet.nrows):
-            if (i != 0) and message.guild.name == "The CA Discord":
-                boop = guildSheet.cell_value(i, guildSheet.ncols - 4) - guildSheet.cell_value(i, 12)
-                beep = boop/guildSheet.cell_value(i, guildSheet.ncols - 2)
-                if (beep > activeMemberNoCountNum):
-                    activeMemberNoCountNum = beep
-                    activeMemberNoCountID = guildSheet.cell_value(i, 0)
-                    activeMemberNoCount = message.guild.get_member(int(activeMemberNoCountID))
-        totalPerChannel = 0
-        sumTotal = 0
-        channelName = ""
-        countingAndRecursionInt = -1
-        endCol = guildSheet.ncols - 4
-        for i in range(guildSheet.ncols):
+        if userOptLevel >= 0:
+            wz = xlrd.open_workbook("C:\\Users\\Sebastian_Polge\\OneDrive-CaryAcademy\\Documents\\meNewBot\\Verity\\StatsBot\\Complete.xls")
+            guildSheet = wz.sheet_by_name(message.guild.name)
+            positionOfTotalColumn = guildSheet.ncols - 4
+            positionOfAverageMessage = guildSheet.ncols -1
+            activeMember = ""
+            activeMemberActivity = 0
+            activeMemberNoCount = ""
+            activeMemberNoCountNum = 0
+            totalMessages = 0
+            for i in range(guildSheet.nrows):
+                if i != 0 and i < guildSheet.nrows-1:
+                    print("i/total col position = " + str(i) + "/" + str(positionOfTotalColumn))
+                    totalMessages += int(guildSheet.cell_value(i, positionOfTotalColumn))
+                    if (guildSheet.cell_value(i, positionOfAverageMessage) > activeMemberActivity):
+                        activeMemberActivity = guildSheet.cell_value(i, positionOfAverageMessage)
+                        activeMemberID = guildSheet.cell_value(i, 0)
+                        activeMember = message.guild.get_member(int(activeMemberID))
+            for i in range(guildSheet.nrows):
+                if (i != 0) and message.guild.name == "The CA Discord":
+                    boop = guildSheet.cell_value(i, guildSheet.ncols - 4) - guildSheet.cell_value(i, 12)
+                    beep = boop/guildSheet.cell_value(i, guildSheet.ncols - 2)
+                    if (beep > activeMemberNoCountNum):
+                        activeMemberNoCountNum = beep
+                        activeMemberNoCountID = guildSheet.cell_value(i, 0)
+                        activeMemberNoCount = message.guild.get_member(int(activeMemberNoCountID))
+            totalPerChannel = 0
             sumTotal = 0
-            if (i != 0 and i < endCol):
-                for v in range(guildSheet.nrows):
-                  if (v != 0):
-                      sumTotal+=int(guildSheet.cell_value(v, i))
-                if (sumTotal > totalPerChannel):
-                    if guildSheet.cell_value(0, i) != "counting-and-recursion":
-                        channelName = guildSheet.cell_value(0, i)
-                        totalPerChannel = sumTotal
-                    else:
-                        countingAndRecursionInt = sumTotal
-        #print (channelName +": " + str(totalPerChannel))
-        memberCount = guildSheet.nrows - 1
-        channelCount = guildSheet.ncols - 5
-        owner = message.guild.owner.name
-        currentDate = datetime.date(datetime.now())
-        serverAge = message.guild.created_at
-        delta = currentDate - datetime.date(serverAge)
-        messageActivity = int(totalMessages) / delta.days
-        embed = discord.Embed(title=message.guild.name, color=0xFF9900)
-        embed.add_field(name="Total Messages Sent on this Server: ", value = int(totalMessages), inline=False)
-        embed.add_field(name="Most Active Member: ", value=activeMember.name, inline=False)
-        if message.guild.name == "The CA Discord":
-            embed.add_field(name="Most Active Member, Not Including #counting-and-recursion: ", value=activeMemberNoCount.name, inline=False)
-        if (countingAndRecursionInt > totalPerChannel):
-            embed.add_field(name="Highest Message Count per Channel, Not Including #counting-and-recursion: ", value="#" + channelName, inline=False)
-            embed.add_field(name="Highest Message Count per Channel", value="#counting-and-recursion: ", inline=False)
-        else:
-            embed.add_field(name="Highest Message Count per Channel: ", value=channelName, inline=False)
-        embed.add_field(name="Number of Members: ", value=memberCount, inline=False)
-        embed.add_field(name="Number of Channels: ", value=channelCount, inline=False)
-        embed.add_field(name="Message Activity: ", value=str(round(messageActivity,2)) + " messages per day.", inline=False)
-        embed.add_field(name="Owner: ", value=owner, inline=False)
-        embed.set_thumbnail(url=message.guild.icon_url)
-        embed.set_footer(text="Created by The Invisible Man", icon_url="https://cdn.discordapp.com/avatars/366709133195476992/01cb7c2c7f2007d8b060e084ea4eb6fd.png?size=512")
-        await message.channel.send(embed=embed) 
-        print("\n")
+            channelName = ""
+            countingAndRecursionInt = -1
+            endCol = guildSheet.ncols - 4
+            for i in range(guildSheet.ncols):
+                sumTotal = 0
+                if (i != 0 and i < endCol):
+                    for v in range(guildSheet.nrows):
+                        if (v != 0):
+                            sumTotal+=int(guildSheet.cell_value(v, i))
+                        if (sumTotal > totalPerChannel):
+                            if guildSheet.cell_value(0, i) != "counting-and-recursion":
+                                channelName = guildSheet.cell_value(0, i)
+                                totalPerChannel = sumTotal
+                            else:
+                                countingAndRecursionInt = sumTotal
+            #print (channelName +": " + str(totalPerChannel))
+            memberCount = guildSheet.nrows - 1
+            channelCount = guildSheet.ncols - 5
+            owner = message.guild.owner.name
+            currentDate = datetime.date(datetime.now())
+            serverAge = message.guild.created_at
+            delta = currentDate - datetime.date(serverAge)
+            messageActivity = int(totalMessages) / delta.days
+            embed = discord.Embed(title=message.guild.name, color=0xFF9900)
+            embed.add_field(name="Total Messages Sent on this Server: ", value = int(totalMessages), inline=False)
+            embed.add_field(name="Most Active Member: ", value=activeMember.name, inline=False)
+            if message.guild.name == "The CA Discord":
+                embed.add_field(name="Most Active Member, Not Including #counting-and-recursion: ", value=activeMemberNoCount.name, inline=False)
+            if (countingAndRecursionInt > totalPerChannel):
+                embed.add_field(name="Highest Message Count per Channel, Not Including #counting-and-recursion: ", value="#" + channelName, inline=False)
+                embed.add_field(name="Highest Message Count per Channel", value="#counting-and-recursion: ", inline=False)
+            else:
+                embed.add_field(name="Highest Message Count per Channel: ", value=channelName, inline=False)
+            embed.add_field(name="Number of Members: ", value=memberCount, inline=False)
+            embed.add_field(name="Number of Channels: ", value=channelCount, inline=False)
+            embed.add_field(name="Message Activity: ", value=str(round(messageActivity,2)) + " messages per day.", inline=False)
+            embed.add_field(name="Owner: ", value=owner, inline=False)
+            embed.set_thumbnail(url=message.guild.icon_url)
+            embed.set_footer(text="Created by The Invisible Man", icon_url="https://cdn.discordapp.com/avatars/366709133195476992/01cb7c2c7f2007d8b060e084ea4eb6fd.png?size=512")
+            await message.channel.send(embed=embed) 
+            print("\n")
     if message.content.startswith('&serverStatCount') and message.author.id == 366709133195476992:
         wb = Workbook()
         sheet1 = wb.add_sheet('Sheet 1')
+        anonWorkbook = Workbook()
+        anonSheet = anonWorkbook.add_sheet("Sheet 1")
         i = 1
         zed = 0
         memberList = message.guild.members
@@ -293,13 +303,16 @@ async def on_message(message):
             sheet1.write(i, 0, member.name)
             i+=1
             print("Added " + member.name)
+        AnonChannelList = {}
         channelList = message.guild.text_channels
         channelQuant = len(channelList)
         x = 1
         for channel in channelList:
             if channel.name != "robot-game" and channel.name != "starfall-private-space" and channel.name != "ca-nerd-squad":
                 sheet1.write(0, x, channel.name)
+                anonSheet.write(0, x, channel.name)
                 x+=1
+                AnonChannelList[channel.name] = 0
                 print("Added #" + channel.name)
         wb.save(message.guild.name + ".xls")
         server = message.guild.text_channels       
@@ -313,8 +326,9 @@ async def on_message(message):
                 async for message in channel.history(limit=None):
                     for member in memberList:
                         if member.name == message.author.name:
-                            #print("Found author!")
                             authorMessageQuant[member.name] = str(int(authorMessageQuant[member.name])+ 1)
+                    if message.author.getUserOptLevel() >= 0:
+                        AnonChannelList[channel.name]+=1
                 wr = xlrd.open_workbook("C:\\Users\\Sebastian_Polge\\OneDrive-CaryAcademy\\Documents\\meNewBot\\Verity\\StatsBot\\" + message.guild.name + ".xls") 
                 sheet = wr.sheet_by_index(0) 
                 for i in range(sheet.ncols):
@@ -333,6 +347,10 @@ async def on_message(message):
                     zed = y + 1
                     wb.save(message.guild.name + ".xls")
         x = 1
+        channelCounter = 1
+        for channel in AnonChannelList:
+            anonSheet.write(1, channelCounter, AnonChannelList[channel])
+        anonWorkbook.save("Anon.xls")
         sheet1.write(0, zed, "Message Total:")
         sheet1.write(0, zed + 1, "Date Joined:")
         sheet1.write(0, zed + 2, "Days on Server:")
@@ -365,109 +383,114 @@ async def on_message(message):
         print("Complete!")
     if message.content.startswith("&serverActiveList") or message.content.startswith("&serveractivelist"):
         print("Server Info request made by " + message.author.name + " at " + str(message.created_at) + " for guild " + message.guild.name)
-        wz = xlrd.open_workbook("C:\\Users\\Sebastian_Polge\\OneDrive-CaryAcademy\\Documents\\meNewBot\\Verity\\StatsBot\\Complete.xls")
-        guildSheet = wz.sheet_by_name(message.guild.name)
-        if len(message.content.split()) > 1:
-            uncludeChannels = []
-            for i in message.content.split():
-                if message.content.split().index(i) != 0:
-                    uncludeChannels.append(i)
-                    print(i)
-            positionOfAverageColumn = guildSheet.ncols - 1
-            positionOfDaysCol = guildSheet.ncols - 2
-            positionOfTotalCol = guildSheet.ncols - 4
-            embed = discord.Embed(title="Most Active On Server", color=0xFF9900)
-            x = []
-            for i in range(guildSheet.nrows):
-                if i != 0:
-                    grandTotal = 0
-                    for c in range(guildSheet.ncols):
-                        if c > 0 and c < positionOfTotalCol:
-                            if not guildSheet.cell_value(0, c) in uncludeChannels:
-                                grandTotal += guildSheet.cell_value(i, c)
-                                y = [guildSheet.cell_value(i, 0), guildSheet.cell_value(i, positionOfAverageColumn)]
-                            x.append(y)
-            for i in sorted(x, key = lambda x: x[1])[::-1]:
-                messageTotal = z
-                bloop = round(i[1], 2)
-                userUserName = message.guild.get_member(i[0])
+        userOptLevel = getUserOptLevel(message.author.id)
+        if userOptLevel >= 0:    
+            wz = xlrd.open_workbook("C:\\Users\\Sebastian_Polge\\OneDrive-CaryAcademy\\Documents\\meNewBot\\Verity\\StatsBot\\Complete.xls")
+            guildSheet = wz.sheet_by_name(message.guild.name)
+            if len(message.content.split()) > 1:
+                uncludeChannels = []
+                for i in message.content.split():
+                    if message.content.split().index(i) != 0:
+                        uncludeChannels.append(i)
+                        print(i)
+                positionOfAverageColumn = guildSheet.ncols - 1
+                positionOfDaysCol = guildSheet.ncols - 2
+                positionOfTotalCol = guildSheet.ncols - 4
+                embed = discord.Embed(title="Most Active On Server", color=0xFF9900)
+                x = []
+                for i in range(guildSheet.nrows):
+                    if i != 0:
+                        grandTotal = 0
+                        for c in range(guildSheet.ncols):
+                            if c > 0 and c < positionOfTotalCol:
+                                if not guildSheet.cell_value(0, c) in uncludeChannels:
+                                    grandTotal += guildSheet.cell_value(i, c)
+                                    y = [guildSheet.cell_value(i, 0), guildSheet.cell_value(i, positionOfAverageColumn)]
+                                x.append(y)
+                for i in sorted(x, key = lambda x: x[1])[::-1]:
+                    messageTotal = z
+                    bloop = round(i[1], 2)
+                    userUserName = message.guild.get_member(i[0])
 
-                embed.add_field(name=userUserName.name, value= "Average of " + str(bloop) + " messages per day (" + str(), inline=False)
-                #print(str(i[0]) + " added")
-                #print("X len: " + str(len(x)))
+                    embed.add_field(name=userUserName.name, value= "Average of " + str(bloop) + " messages per day (" + str(), inline=False)
+                    #print(str(i[0]) + " added")
+                    #print("X len: " + str(len(x)))
 
-            embed.set_thumbnail(url=message.guild.icon_url)
-            embed.set_footer(text="Created by The Invisible Man", icon_url="https://cdn.discordapp.com/avatars/366709133195476992/01cb7c2c7f2007d8b060e084ea4eb6fd.png?size=512")
-            await message.channel.send(embed=embed)
+                embed.set_thumbnail(url=message.guild.icon_url)
+                embed.set_footer(text="Created by The Invisible Man", icon_url="https://cdn.discordapp.com/avatars/366709133195476992/01cb7c2c7f2007d8b060e084ea4eb6fd.png?size=512")
+                await message.channel.send(embed=embed)
 
-        else:
-            positionOfAverageColumn = guildSheet.ncols - 1
-            embed = discord.Embed(title="Most Active On Server", color=0xFF9900)
-            x = []
-            for i in range(guildSheet.nrows):
-                if i != 0:
-                    y = [guildSheet.cell_value(i, 0), guildSheet.cell_value(i, positionOfAverageColumn)]
-                    x.append(y)
-            
-            for i in sorted(x, key = lambda x: x[1])[::-1]:
-                bloop = round(i[1], 2)
-                print('"' + str(i[0]) + '"')
-                userUserName = message.guild.get_member(int(i[0]))
+            else:
+                positionOfAverageColumn = guildSheet.ncols - 1
+                embed = discord.Embed(title="Most Active On Server", color=0xFF9900)
+                x = []
+                for i in range(guildSheet.nrows):
+                    if i != 0:
+                        y = [guildSheet.cell_value(i, 0), guildSheet.cell_value(i, positionOfAverageColumn)]
+                        x.append(y)
+                
+                for i in sorted(x, key = lambda x: x[1])[::-1]:
+                    bloop = round(i[1], 2)
+                    print('"' + str(i[0]) + '"')
+                    userUserName = message.guild.get_member(int(i[0]))
 
-                embed.add_field(name=userUserName.name, value= "Average of " + str(bloop) + " messages per day", inline=False)
-                #print(str(i[0]) + " added")
-            embed.set_thumbnail(url=message.guild.icon_url)
-            embed.set_footer(text="Created by The Invisible Man", icon_url="https://cdn.discordapp.com/avatars/366709133195476992/01cb7c2c7f2007d8b060e084ea4eb6fd.png?size=512")
-            await message.channel.send(embed=embed)
-        print("\n")
+                    embed.add_field(name=userUserName.name, value= "Average of " + str(bloop) + " messages per day", inline=False)
+                    #print(str(i[0]) + " added")
+                embed.set_thumbnail(url=message.guild.icon_url)
+                embed.set_footer(text="Created by The Invisible Man", icon_url="https://cdn.discordapp.com/avatars/366709133195476992/01cb7c2c7f2007d8b060e084ea4eb6fd.png?size=512")
+                await message.channel.send(embed=embed)
+            print("\n")
     if message.content.startswith("&I bid y'all adieu") and message.author.id == 366709133195476992:
+        import time
         time.sleep(2)
         await message.channel.send("Farewell, and have a good night!")
         time.sleep(2)
         await message.guild.leave()
     if message.content.startswith("&channelInfo") or message.content.startswith("&channelinfo"):
         print("Channel Info request made by " + message.author.name + " at " + str(message.created_at) + " on guild " + message.guild.name)
-        channel = message.channel
-        if len(message.content.split(" ")) > 1:
-            messageSplit = message.content.split(" ")
-            channelNotif = messageSplit[1].split("#")
-            channelNotifSplit2 = channelNotif[1].split(">")
-            channelID = channelNotifSplit2[0]
-            channel = message.guild.get_channel(int(channelID))
-            
-        wz = xlrd.open_workbook("C:\\Users\\Sebastian_Polge\\OneDrive-CaryAcademy\\Documents\\meNewBot\\Verity\\StatsBot\\Complete.xls")
-        guildSheet = wz.sheet_by_name(message.guild.name)
-        channelPos = -1
-        for i in range(guildSheet.ncols):
-            if guildSheet.cell_value(0, i) == channel.name:
-                channelPos = i
-        messageHighID = ""
-        messageHigh = 0
-        totalMessages = 0
-        print(channel.name + "/" + guildSheet.cell_value(0, channelPos))
-        if channelPos != 0 and channelPos != -1:
-            for i in range(guildSheet.nrows):
-                if i != 0:
-                    totalMessages = totalMessages + int(guildSheet.cell_value(i,channelPos))
-                    if int(guildSheet.cell_value(i, channelPos)) > messageHigh:
-                        messageHigh = guildSheet.cell_value(i, channelPos)
-                        messageHighID = guildSheet.cell_value(i, 0)
-                    else:
-                        if int(guildSheet.cell_value(i, channelPos)) == messageHigh:
-                            messageHighID = messageHighID + "/" + guildSheet.cell_value(i, 0)
-        currentDate = datetime.date(datetime.now())
-        channelAge = channel.created_at
-        delta = currentDate - datetime.date(channelAge)
-        messageActivity = totalMessages / delta.days
-        messageHighUser = channel.guild.get_member(int(messageHighID))
-        embed = discord.Embed(title="#" + channel.name + " info", color=0xFF9900)
-        embed.add_field(name="Person with highest message count: ", value=messageHighUser.name + " (" + str(int(messageHigh)) + " messages)", inline=False)
-        embed.add_field(name="Total Messages Sent:", value=totalMessages, inline=False)
-        embed.add_field(name="Message Activity: ", value=str(round(messageActivity, 2)) + " per day", inline=False)
-        embed.add_field(name="Server: ", value=channel.guild, inline=False)
-        embed.set_thumbnail(url=message.guild.icon_url)
-        embed.set_footer(text="Created by The Invisible Man", icon_url="https://cdn.discordapp.com/avatars/366709133195476992/01cb7c2c7f2007d8b060e084ea4eb6fd.png?size=512")
-        await message.channel.send(embed=embed)
+        userOptInfo = getUserOptLevel(message.author.id)
+        if userOptInfo >= 0: 
+            channel = message.channel
+            if len(message.content.split(" ")) > 1:
+                messageSplit = message.content.split(" ")
+                channelNotif = messageSplit[1].split("#")
+                channelNotifSplit2 = channelNotif[1].split(">")
+                channelID = channelNotifSplit2[0]
+                channel = message.guild.get_channel(int(channelID))
+                
+            wz = xlrd.open_workbook("C:\\Users\\Sebastian_Polge\\OneDrive-CaryAcademy\\Documents\\meNewBot\\Verity\\StatsBot\\Complete.xls")
+            guildSheet = wz.sheet_by_name(message.guild.name)
+            channelPos = -1
+            for i in range(guildSheet.ncols):
+                if guildSheet.cell_value(0, i) == channel.name:
+                    channelPos = i
+            messageHighID = ""
+            messageHigh = 0
+            totalMessages = 0
+            print(channel.name + "/" + guildSheet.cell_value(0, channelPos))
+            if channelPos != 0 and channelPos != -1:
+                for i in range(guildSheet.nrows):
+                    if i != 0:
+                        totalMessages = totalMessages + int(guildSheet.cell_value(i,channelPos))
+                        if int(guildSheet.cell_value(i, channelPos)) > messageHigh:
+                            messageHigh = guildSheet.cell_value(i, channelPos)
+                            messageHighID = guildSheet.cell_value(i, 0)
+                        else:
+                            if int(guildSheet.cell_value(i, channelPos)) == messageHigh:
+                                messageHighID = messageHighID + "/" + guildSheet.cell_value(i, 0)
+            currentDate = datetime.date(datetime.now())
+            channelAge = channel.created_at
+            delta = currentDate - datetime.date(channelAge)
+            messageActivity = totalMessages / delta.days
+            messageHighUser = channel.guild.get_member(int(messageHighID))
+            embed = discord.Embed(title="#" + channel.name + " info", color=0xFF9900)
+            embed.add_field(name="Person with highest message count: ", value=messageHighUser.name + " (" + str(int(messageHigh)) + " messages)", inline=False)
+            embed.add_field(name="Total Messages Sent:", value=totalMessages, inline=False)
+            embed.add_field(name="Message Activity: ", value=str(round(messageActivity, 2)) + " per day", inline=False)
+            embed.add_field(name="Server: ", value=channel.guild, inline=False)
+            embed.set_thumbnail(url=message.guild.icon_url)
+            embed.set_footer(text="Created by The Invisible Man", icon_url="https://cdn.discordapp.com/avatars/366709133195476992/01cb7c2c7f2007d8b060e084ea4eb6fd.png?size=512")
+            await message.channel.send(embed=embed)
     if message.content.startswith("&help"):
         print("Help request made by " + message.author.name + " at " + str(message.created_at) + " on guild " + message.guild.name)
         embed = discord.Embed(title="Help", description="Hello, I'm StatBot! Here are some of my functions: ", color=0xFF9900)
@@ -494,6 +517,7 @@ async def on_message(message):
         embed.set_footer(text="Created by The Invisible Man", icon_url="https://cdn.discordapp.com/avatars/366709133195476992/01cb7c2c7f2007d8b060e084ea4eb6fd.png?size=512")
         await message.channel.send(embed=embed)
     if message.content.startswith('&statCountAllServer') and message.author.id == 366709133195476992:
+        dmChannel = await message.author.create_dm()
         optAllowed = []
         anonAllowed = []
         guildCount = 1
@@ -510,12 +534,13 @@ async def on_message(message):
             memberQuant = len(memberList)
             for member in memberList:
                 userOptLevel = getUserOptLevel(member.id)
+                print("I = " + str(i))
                 if userOptLevel == -5 and member.bot == False:
                     print("Added " + member.name + " to default optLevel.")
                     defaultOpt = open("opt0.txt", "a")
                     defaultOpt.write("\n" + str(member.id))
                     userOptLevel = 0
-                if member.bot == True:
+                if member.bot == True and userOptLevel == -5:
                     print("Added " + member.name + " to default optLevel for bots.")
                     defaultOpt = open("opt2.txt", "a")
                     defaultOpt.write("\n" + str(member.id))
@@ -523,6 +548,7 @@ async def on_message(message):
                 if userOptLevel >= 0:
                     anonAllowed.append(member.id)
                 if userOptLevel >= 1:
+                    print("-----------------------------------Opt Level: " + str(userOptLevel) +"; i: " + str(i))
                     optAllowed.append(member.id)
                     sheet1.write(i, 0, str(member.id))
                     i+=1
@@ -530,7 +556,6 @@ async def on_message(message):
                 else:
                     print(member.name + "(" + str(member.id) + ") has an optLevel of " + str(userOptLevel))
                 wb.save(serverActive.name + ".xls")
-                sheet1.write(i, 0, "Anonymus")
             channelList = serverActive.text_channels
             channelQuant = len(channelList)
             x = 1
@@ -565,7 +590,7 @@ async def on_message(message):
                         x = 1
                         for mStuff in range(sheet.nrows):
                             if sheet.cell_value(mStuff, 0) == member:
-                                print("Author is found!" + sheet.cell_value(mStuff, 0) + "/" + member) 
+                                print("Author is found! " + sheet.cell_value(mStuff, 0) + "/" + member) 
                                 x = mStuff
                         messageCount = authorMessageQuant[member]
                         for i in optAllowed:
@@ -586,7 +611,7 @@ async def on_message(message):
                 print("Completed channel #" + channel.name)
                 
             x = 1
-            print("Zed = " + str(zed))
+            print("Location of First Total Column: " + str(zed))
             sheet1.write(0, zed, "Message Total:")
             sheet1.write(0, zed + 1, "Date Joined:")
             sheet1.write(0, zed + 2, "Days on Server:")
@@ -598,15 +623,12 @@ async def on_message(message):
                     while n > 0:
                         n, remainder = divmod(n - 1, 26)
                         string = chr(65 + remainder) + string
-                    print(string)
                     value1 = "B" + str(x + 1)
                     value2 = string + str(x + 1)
                     sheet1.write(x, zed, xlwt.Formula("SUM(" + value1 + ":" + value2 + ")"))
-                    print("Zed: " + str(zed) + ", x: " + str(x))
                     dateTimeFull = member.joined_at
                     dateTimeSplit = str(dateTimeFull).split()
                     sheet1.write(x, zed + 1, dateTimeSplit[0])
-                    print("Zed: " + str(zed) + ", x: " + str(x))
                     dateTimeFull = member.joined_at
                     dateJoined = datetime.date(dateTimeFull)
                     dateTimeSplit = str(dateTimeFull).split()
@@ -614,7 +636,6 @@ async def on_message(message):
                     delta = currentDate - dateJoined
                     sheet1.write(x, zed + 2, delta.days)
                     sheet1.write(x, zed + 3, xlwt.Formula("SUM(" + value1 + ":" + value2 + ")/" + str(delta.days))) 
-                    print("Zed: " + str(zed) + ", x: " + str(x))
                     x+=1
             s = serverActive.name
             if s == "Cary Academy D&D- A Band of Fools" or s == "Cary Academy D&D- A Band of Fools":
@@ -623,7 +644,7 @@ async def on_message(message):
             print("Complete!")
             guildCount+=1
             otherGuildCount +=1
-        await client.send_message(message.author, "Completed " + server.name)
+            await dmChannel.send("Completed " + serverActive.name)
     if message.content.startswith('&updateComplete') and message.author.id == 366709133195476992:
         wc = Workbook()
         for serverActive in client.guilds:
@@ -637,31 +658,36 @@ async def on_message(message):
             sheetOne = wc.add_sheet(s)
             for i in range(serverStat.ncols):
                 for j in range(serverStat.nrows):
-                    if i != serverStat.ncols - 1 and i != serverStat.ncols - 4:
+                    if j == 0 or (i != serverStat.ncols - 1 and i != serverStat.ncols - 4):
                         sheetOne.write(j, i, serverStat.cell_value(j,i))
             for j in range(serverStat.nrows):
-                if j != 0:
-                    string = ""
-                    n = serverStat.ncols - 5
-                    while n > 0:
-                        n, remainder = divmod(n - 1, 26)
-                        string = chr(65 + remainder) + string
-                    value1 = "B" + str(j + 1)
-                    value2 = string + str(j + 1)
-                    formula = "SUM(" + value1 + ":" + value2 + ")"
-                    sheetOne.write(j, serverStat.ncols - 4, xlwt.Formula(formula))
-                    #print("Formula: " + formula)
-                    user = client.get_user(int(serverStat.cell_value(j,0)))
-                    print(user.name + " (" + str(user.id) + ")")
-                    member = serverActive.get_member(int(serverStat.cell_value(j,0)))
-                    dateTimeFull = member.joined_at
-                    dateJoined = datetime.date(dateTimeFull)
-                    dateTimeSplit = str(dateTimeFull).split()
-                    currentDate = datetime.date(datetime.now())
-                    delta = currentDate - dateJoined
-                    sheetOne.write(j, serverStat.ncols - 1, xlwt.Formula("SUM(" + value1 + ":" + value2 + ")/" + str(delta.days)))
-                    wc.save("Complete.xls")
+                if serverStat.cell_value(j,0) == "":
+                        print("ID is empty. ")
+                else:
+                    if j != 0:
+                        string = ""
+                        n = serverStat.ncols - 5
+                        while n > 0:
+                            n, remainder = divmod(n - 1, 26)
+                            string = chr(65 + remainder) + string
+                        value1 = "B" + str(j + 1)
+                        value2 = string + str(j + 1)
+                        formula = "SUM(" + value1 + ":" + value2 + ")"
+                        sheetOne.write(j, serverStat.ncols - 4, xlwt.Formula(formula))
+                        user = client.get_user(int(serverStat.cell_value(j,0)))
+                        
+                        print(user.name + " (" + str(user.id) + ")")
+                        member = serverActive.get_member(int(serverStat.cell_value(j,0)))
+                        dateTimeFull = member.joined_at
+                        dateJoined = datetime.date(dateTimeFull)
+                        dateTimeSplit = str(dateTimeFull).split()
+                        currentDate = datetime.date(datetime.now())
+                        delta = currentDate - dateJoined
+                        sheetOne.write(j, serverStat.ncols - 1, xlwt.Formula("SUM(" + value1 + ":" + value2 + ")/" + str(delta.days)))
+                        wc.save("Complete.xls")
         print("Completed.")
+        dmChannel = await message.author.create_dm()
+        await dmChannel.send("Updates Complete.")
     if message.content.startswith('&timeCounter'):
         print("Channel Activity Times request made by " + message.author.name + " at " + str(message.created_at) + " on guild " + message.guild.name)
         oneSec = await message.channel.send("One second, please...")
@@ -798,10 +824,12 @@ async def on_message(message):
         wz.save("TimesManName.xls")
         authorDict = {}
         for beep in memberList:
-            print(beep.name + "(" + str(beep.id) + ")")
-            sheet1.write(number, 0, str(beep.id))
-            sheet2.write(number, 0, str(beep.name))
-            number+=1
+            beepLevel = getUserOptLevel(beep.id)
+            if getUserOptLevel > 0:
+                print(beep.name + "(" + str(beep.id) + ")")
+                sheet1.write(number, 0, str(beep.id))
+                sheet2.write(number, 0, str(beep.name))
+                number+=1
         wc.save("TimesMan.xls")
         wz.save("TimesManName.xls")
         timesTW = []
@@ -809,7 +837,8 @@ async def on_message(message):
         for z in range(0, 24):
             newDict = {}
             for beep in memberList:
-                newDict[beep.name] = 0
+                if getUserOptLevel(beep.id) > 0:
+                    newDict[beep.name] = 0
             timesTW.append(newDict)
         guildNumber = 1
         for i in client.guilds:
@@ -853,51 +882,53 @@ async def on_message(message):
                 userID = messageContentList[1]
             user = client.get_user(int(userID))
         print("User Chart request made by " + message.author.name + " at " + str(message.created_at) + " on guild " + message.guild.name + " for " + user.name)
+        if getUserOptLevel(userID) >= 0:
+            statBook = xlrd.open_workbook("C:\\Users\\Sebastian_Polge\\OneDrive-CaryAcademy\\Documents\\meNewBot\\Verity\\StatsBot\\TimesMan.xls")
+            statSheet = statBook.sheet_by_index(0)
+            userLoc = -1
+            for i in range(statSheet.nrows):
+                if i != 0:
+                    if str(user.id) == statSheet.cell_value(i, 0):
+                        userLoc = i
+            if userLoc == -1:
+                error()
+            objects = ('0:00', '1:00', '2:00', '3:00', '4:00', '5:00', '6:00', '7:00', '8:00', '9:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00')
+            y_pos = np.arange(len(objects))
+            topNum = 0
+            for i in range(statSheet.ncols):
+                if i != 0:
+                    if statSheet.cell_value(userLoc, i) > topNum:
+                        topNum = statSheet.cell_value(userLoc, i)
+            valueSplit = topNum / 5
+            secNum = int(topNum - valueSplit)
+            thirNum = int(secNum - valueSplit)
+            fourNum = int(thirNum - valueSplit)
+            fitNum = int(fourNum - valueSplit)
+            per = [int(statSheet.cell_value(userLoc, 1)), int(statSheet.cell_value(userLoc, 2)), int(statSheet.cell_value(userLoc, 3)), int(statSheet.cell_value(userLoc, 4)), int(statSheet.cell_value(userLoc, 5)), int(statSheet.cell_value(userLoc, 6)), int(statSheet.cell_value(userLoc, 7)), int(statSheet.cell_value(userLoc, 8)), int(statSheet.cell_value(userLoc, 9)), int(statSheet.cell_value(userLoc, 10)), int(statSheet.cell_value(userLoc, 11)), int(statSheet.cell_value(userLoc, 12)), int(statSheet.cell_value(userLoc, 13)), int(statSheet.cell_value(userLoc, 14)), int(statSheet.cell_value(userLoc, 15)), int(statSheet.cell_value(userLoc, 16)), int(statSheet.cell_value(userLoc, 17)), int(statSheet.cell_value(userLoc, 18)), int(statSheet.cell_value(userLoc, 19)), int(statSheet.cell_value(userLoc, 20)), int(statSheet.cell_value(userLoc, 21)), int(statSheet.cell_value(userLoc, 22)), int(statSheet.cell_value(userLoc, 23)), int(statSheet.cell_value(userLoc, 24))]
+            print(str(len(per)) + "/" + str(len(y_pos)))
+            colorMember = message.guild.get_member(user.id)
+            print(colorMember.name + ": " + str(colorMember.colour))
+            fig = plt.figure(figsize=(75,50))
+            plt.bar(y_pos, per, align='center', color=str(colorMember.colour))
+            font = {'size'   : 75}
 
-        statBook = xlrd.open_workbook("C:\\Users\\Sebastian_Polge\\OneDrive-CaryAcademy\\Documents\\meNewBot\\Verity\\StatsBot\\TimesMan.xls")
-        statSheet = statBook.sheet_by_index(0)
-        userLoc = -1
-        for i in range(statSheet.nrows):
-            if i != 0:
-                if str(user.id) == statSheet.cell_value(i, 0):
-                    userLoc = i
-        if userLoc == -1:
-            error()
-        objects = ('0:00', '1:00', '2:00', '3:00', '4:00', '5:00', '6:00', '7:00', '8:00', '9:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00')
-        y_pos = np.arange(len(objects))
-        topNum = 0
-        for i in range(statSheet.ncols):
-            if i != 0:
-                if statSheet.cell_value(userLoc, i) > topNum:
-                    topNum = statSheet.cell_value(userLoc, i)
-        valueSplit = topNum / 5
-        secNum = int(topNum - valueSplit)
-        thirNum = int(secNum - valueSplit)
-        fourNum = int(thirNum - valueSplit)
-        fitNum = int(fourNum - valueSplit)
-        per = [int(statSheet.cell_value(userLoc, 1)), int(statSheet.cell_value(userLoc, 2)), int(statSheet.cell_value(userLoc, 3)), int(statSheet.cell_value(userLoc, 4)), int(statSheet.cell_value(userLoc, 5)), int(statSheet.cell_value(userLoc, 6)), int(statSheet.cell_value(userLoc, 7)), int(statSheet.cell_value(userLoc, 8)), int(statSheet.cell_value(userLoc, 9)), int(statSheet.cell_value(userLoc, 10)), int(statSheet.cell_value(userLoc, 11)), int(statSheet.cell_value(userLoc, 12)), int(statSheet.cell_value(userLoc, 13)), int(statSheet.cell_value(userLoc, 14)), int(statSheet.cell_value(userLoc, 15)), int(statSheet.cell_value(userLoc, 16)), int(statSheet.cell_value(userLoc, 17)), int(statSheet.cell_value(userLoc, 18)), int(statSheet.cell_value(userLoc, 19)), int(statSheet.cell_value(userLoc, 20)), int(statSheet.cell_value(userLoc, 21)), int(statSheet.cell_value(userLoc, 22)), int(statSheet.cell_value(userLoc, 23)), int(statSheet.cell_value(userLoc, 24))]
-        print(str(len(per)) + "/" + str(len(y_pos)))
-        colorMember = message.guild.get_member(user.id)
-        print(colorMember.name + ": " + str(colorMember.colour))
-        fig = plt.figure(figsize=(75,50))
-        plt.bar(y_pos, per, align='center', color=str(colorMember.colour))
-        font = {'size'   : 75}
+            plt.rc('font', **font)
 
-        plt.rc('font', **font)
-
-        plt.xticks(y_pos, objects, fontsize=50)
-        plt.yticks(fontsize=50)
-        plt.ylabel('Messages')
-        plt.title('Total Messages Sent All Time By Hour By ' + user.name)
-        if user.name != ".| Sunny |.":
-            plt.savefig(user.name + '.png')
+            plt.xticks(y_pos, objects, fontsize=50)
+            plt.yticks(fontsize=50)
+            plt.ylabel('Messages')
+            plt.title('Total Messages Sent All Time By Hour By ' + user.name)
+            if user.name != ".| Sunny |.":
+                plt.savefig(user.name + '.png')
+            else:
+                plt.savefig('Sunny.png')
+            #plt.show()
+            if user.name != ".| Sunny |.":
+                await message.channel.send(file=discord.File(user.name + '.png'))
+            else:
+                await message.channel.send(file=discord.File('Sunny.png'))
         else:
-            plt.savefig('Sunny.png')
-        #plt.show()
-        if user.name != ".| Sunny |.":
-            await message.channel.send(file=discord.File(user.name + '.png'))
-        else:
-            await message.channel.send(file=discord.File('Sunny.png'))
+            await message.channel.send("Your opt level is not high enough to access this information.")
     if message.content.startswith('&fullChart'):
         statBook = xlrd.open_workbook("C:\\Users\\Sebastian_Polge\\OneDrive-CaryAcademy\\Documents\\meNewBot\\Verity\\StatsBot\\TimesManName.xls")
         statSheet = statBook.sheet_by_index(0)
