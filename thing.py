@@ -130,7 +130,7 @@ async def on_message(message):
             messageContentList = message.content.split(" ")
             userURL = str(user.avatar_url)
             print("Target user URL: " + userURL)
-            if userOptLevel >= 2 or (userOptLevel == 1 and user.id == message.author.id):
+            if (userOptLevel >= 2 and getUserOptLevel(message.author.id)) or (userOptLevel == 1 and user.id == message.author.id):
                 wz = xlrd.open_workbook("C:\\Users\\Sebastian_Polge\\OneDrive-CaryAcademy\\Documents\\meNewBot\\Verity\\StatsBot\\Complete.xls")
                 statBook = xlrd.open_workbook("C:\\Users\\Sebastian_Polge\\OneDrive-CaryAcademy\\Documents\\meNewBot\\Verity\\StatsBot\\TimesMan.xls")
                 statSheet = statBook.sheet_by_index(0)
@@ -402,7 +402,7 @@ async def on_message(message):
         print("Server Info request made by " + message.author.name + " at " + str(message.created_at) + " for guild " + message.guild.name)
         userOptLevel = getUserOptLevel(message.author.id)
         if shutDown == False:
-            if userOptLevel >= 0:    
+            if userOptLevel >= 2:    
                 wz = xlrd.open_workbook("C:\\Users\\Sebastian_Polge\\OneDrive-CaryAcademy\\Documents\\meNewBot\\Verity\\StatsBot\\Complete.xls")
                 guildSheet = wz.sheet_by_name(message.guild.name)
                 if len(message.content.split()) > 1:
@@ -460,7 +460,6 @@ async def on_message(message):
                 print("\n")
             else:
                 await message.channel.send("You do not have the required clearance to use this command.")
-
         else:
             await message.channel.send("Sorry for the inconvience, but StatBot is currently shut down with most commands so people have the chance to opt in to the bot.")
     #Gets the list of the most active members on a server.
@@ -498,7 +497,7 @@ async def on_message(message):
                     for i in range(guildSheet.nrows - 1):
                         if i != 0:
                             totalMessages = totalMessages + int(guildSheet.cell_value(i,channelPos))
-                            if int(guildSheet.cell_value(i, channelPos)) > messageHigh:
+                            if int(guildSheet.cell_value(i, channelPos)) > messageHigh and getUserOptLevel(int(guildSheet.cell_value(i, 0))) >= 2:
                                 messageHigh = guildSheet.cell_value(i, channelPos)
                                 messageHighID = guildSheet.cell_value(i, 0)
                             else:
@@ -511,7 +510,8 @@ async def on_message(message):
                 messageActivity = totalMessages / delta.days
                 messageHighUser = channel.guild.get_member(int(messageHighID))
                 embed = discord.Embed(title="#" + channel.name + " info", color=0xFF9900)
-                embed.add_field(name="Person with highest message count: ", value=messageHighUser.name + " (" + str(int(messageHigh)) + " messages)", inline=False)
+                if userOptInfo >= 2:
+                    embed.add_field(name="Person with highest message count: ", value=messageHighUser.name + " (" + str(int(messageHigh)) + " messages)", inline=False)
                 embed.add_field(name="Total Messages Sent:", value=totalMessages, inline=False)
                 embed.add_field(name="Message Activity: ", value=str(round(messageActivity, 2)) + " per day", inline=False)
                 embed.add_field(name="Server: ", value=channel.guild, inline=False)
@@ -1077,20 +1077,68 @@ async def on_message(message):
             if i.name != "test server":
                 await i.leave()
     #Command used to remove StatBot from all servers, barring test server. 
-
-
-
-            
-
+    if message.content.startswith("&overTimeMessageChart") and message.author.id == 366709133195476992:        
+        wa = Workbook()
+        for server in client.guilds:
+            userList = {}
+            anonUsers = []
+            for member in server.members:
+                if getUserOptLevel(member.id) >= 2:
+                    print("Valid Member: " + member.name + " (" + str(member.id) + ")")
+                    userList[member.name] = 0
+                if getUserOptLevel(member.id) >= 0:
+                    print("Anon Member: " + member.name + " (" + str(member.id) + ")")
+                    anonUsers.append(member.name)
+            userList["anon"] = 0
+            months = []
+            month = 0
+            for i in range(7):
+                newMonthList = userList
+                months.append(newMonthList)
+            for channel in server.text_channels:
+                print("Checking #" + channel.name)
+                newList = []
+                for message in channel.history(limit=None):
+                    if message.created_at.month == 9:
+                        newList = months[0]
+                    if message.created_at.month == 10:
+                        newList = months[1]
+                    if message.created_at.month == 11:
+                        newList = months[2]
+                    if message.created_at.month == 12:
+                        newList = months[3]
+                    if message.created_at.month == 1:
+                        newList = months[4]
+                    if message.created_at.month == 2:
+                        newList = months[5]
+                    if message.created_at.month == 3:
+                        newList = months[6]
+                    if message.author.name in userList:
+                        newList[member.name]+=1
+                    if message.author in anonUsers:
+                        newList["anon"]+=1
                     
-
-        
-
-
-
-            
-
-               
-
+            print("Completed channels.")
+            sheet1 = wa.add_sheet(server.name)
+            i = 1
+            for person in userList:
+                sheet1.write(i, 0, person)
+                i+=1
+            sheet1.write(0, 1, "Sept.")
+            sheet1.write(0, 2, "Oct.")
+            sheet1.write(0, 3, "Nov.")
+            sheet1.write(0, 4, "Dec.")
+            sheet1.write(0, 5, "Jan.")
+            sheet1.write(0, 6, "Feb.")
+            sheet1.write(0, 7, "Mar.")
+            zep = 0
+            for moth in months:
+                zeep = 1
+                zep+=1
+                for user in moth:
+                    sheet1.write(zeep, zep, moth[user])
+                    zeep+=1
+            wa.save("yes.xls")
+    #New command to make a chart. 
                 
 client.run('NjYyNzg4MTk1NzM3NDAzNDQy.Xg_Dqg.RvP5k1D4dWeg0tqomlXiaHz7QQg')
