@@ -21,7 +21,7 @@ est = pytz.timezone('US/Eastern')
 utc = pytz.utc
 fmt = '%Y-%m-%d %H:%M:%S %Z%z'
 optLevels = [-1, 0, 1, 2]
-
+print("Your program has begun running.")
 client = discord.Client()
 def error():
     embed = discord.Embed(title="Error", description="Sorry, something went wrong.", color=0xFF9900)
@@ -48,6 +48,7 @@ def getUserOptLevel(userID):
         else:
             counter+=1
     return -5
+@client.event
 async def on_ready():
     print('We have logged in as {0.user}'.format(client))
     print("\n")
@@ -266,7 +267,7 @@ async def on_message(message):
                 for i in range(guildSheet.ncols):
                     sumTotal = 0
                     if (i != 0 and i < endCol):
-                        for v in range(guildSheet.nrows):
+                        for v in range(guildSheet.nrows - 1):
                             if (v != 0):
                                 sumTotal+=int(guildSheet.cell_value(v, i))
                             if (sumTotal > totalPerChannel):
@@ -307,96 +308,132 @@ async def on_message(message):
             await message.channel.send("Sorry for the inconvience, but StatBot is currently shut down with most commands so people have the chance to opt in to the bot.")
     #Gets the info on the server.
     if message.content.startswith('&serverStatCount') and message.author.id == 366709133195476992:
+        dmChannel = await message.author.create_dm()
+        optAllowed = []
+        anonAllowed = []
+        guildCount = 1
+        otherGuildCount = 1
+        guildTotal = len(client.guilds)
+        serverActive = message.guild
         wb = Workbook()
         sheet1 = wb.add_sheet('Sheet 1')
-        anonWorkbook = Workbook()
-        anonSheet = anonWorkbook.add_sheet("Sheet 1")
         i = 1
         zed = 0
-        memberList = message.guild.members
+        if serverActive.name == "Starserver":
+            zed-=3
+        memberList = serverActive.members
         memberQuant = len(memberList)
         for member in memberList:
-            sheet1.write(i, 0, member.name)
-            i+=1
-            print("Added " + member.name)
-        AnonChannelList = {}
-        channelList = message.guild.text_channels
+            userOptLevel = getUserOptLevel(member.id)
+            if userOptLevel == -5 and member.bot == False:
+                print("Added " + member.name + " to default optLevel.")
+                defaultOpt = open("opt0.txt", "a")
+                defaultOpt.write("\n" + str(member.id))
+                userOptLevel = 0
+            if member.bot == True and userOptLevel == -5:
+                print("Added " + member.name + " to default optLevel for bots.")
+                defaultOpt = open("opt2.txt", "a")
+                defaultOpt.write("\n" + str(member.id))
+                userOptLevel = 2
+            if userOptLevel >= 0:
+                anonAllowed.append(member.id)
+            if userOptLevel >= 1:
+                optAllowed.append(member.id)
+                sheet1.write(i, 0, str(member.id))
+                i+=1
+                print("Added " + member.name + "(" + str(member.id) + ") (opt level " + str(userOptLevel) + ").")
+            else:
+                print(member.name + "(" + str(member.id) + ") has an optLevel of " + str(userOptLevel))
+            wb.save(serverActive.name + ".xls")
+        channelList = serverActive.text_channels
         channelQuant = len(channelList)
         x = 1
         for channel in channelList:
-            if channel.name != "robot-game" and channel.name != "starfall-private-space" and channel.name != "ca-nerd-squad":
+            if channel.name != "robot-game" and channel.name != "starfall-private-space" and channel.name != "ca-nerd-squad" and channel.name != "vent":
                 sheet1.write(0, x, channel.name)
-                anonSheet.write(0, x, channel.name)
                 x+=1
-                AnonChannelList[channel.name] = 0
                 print("Added #" + channel.name)
-        wb.save(message.guild.name + ".xls")
-        server = message.guild.text_channels       
+        wb.save(serverActive.name + ".xls")
+        server = serverActive.text_channels  
+        channelNumberIc = 1 
         for channel in server:
-            if channel.name != "robot-game" and channel.name != "starfall-private-space" and channel.name != "ca-nerd-squad":
+            if channel.name != "robot-game" and channel.name != "starfall-private-space" and channel.name != "ca-nerd-squad" and channel.name != "vent":
                 y = 1
                 authorMessageQuant = {
                 }
                 for member in memberList:
-                    authorMessageQuant[member.name] = 0
+                    authorMessageQuant[str(member.id)] = 0
+                print(str(channelNumberIc) + "/" + str(channelQuant) + "; " + str(otherGuildCount) + "/" + str(guildTotal) + " #" + channel.name)
                 async for message in channel.history(limit=None):
                     for member in memberList:
                         if member.name == message.author.name:
-                            authorMessageQuant[member.name] = str(int(authorMessageQuant[member.name])+ 1)
-                    if message.author.getUserOptLevel() >= 0:
-                        AnonChannelList[channel.name]+=1
-                wr = xlrd.open_workbook("C:\\Users\\Sebastian_Polge\\OneDrive-CaryAcademy\\Documents\\meNewBot\\Verity\\StatsBot\\" + message.guild.name + ".xls") 
+                            authorMessageQuant[str(member.id)] = str(int(authorMessageQuant[str(member.id)])+ 1)
+                wr = xlrd.open_workbook("C:\\Users\\Sebastian_Polge\\OneDrive-CaryAcademy\\Documents\\meNewBot\\Verity\\StatsBot\\" + serverActive.name + ".xls") 
                 sheet = wr.sheet_by_index(0) 
-                for i in range(sheet.ncols):
-                    if sheet.cell_value(0,i) == channel.name:
+                for stuff in range(sheet.ncols):
+                    if sheet.cell_value(0,stuff) == channel.name:
                         print("Channel is found!") 
-                        y = i
+                        y = stuff
+                anonTotal = 0
                 for member in authorMessageQuant:
                     x = 1
-                    for i in range(sheet.nrows):
-                        if sheet.cell_value(i,0) == member:
-                            print("Author is found!" + sheet.cell_value(i, 0) + "/" + member) 
-                            x = i
-                    print(str(x) + "/" + str(memberQuant) + ";" + str(y) + "/" + str(channelQuant) + " #" + str(channel.name))
+                    for mStuff in range(sheet.nrows):
+                        if sheet.cell_value(mStuff, 0) == member:
+                            print("Author is found! " + sheet.cell_value(mStuff, 0) + "/" + member) 
+                            x = mStuff
                     messageCount = authorMessageQuant[member]
-                    sheet1.write(x, y, int(messageCount))
-                    zed = y + 1
-                    wb.save(message.guild.name + ".xls")
+                    for i in optAllowed:
+                        print(str(member) + "/" + str(i))
+                    if int(member) in optAllowed:
+                        print(sheet.cell_value(x, 0) + " opted in")
+                        print(str(x) + "/" + str(memberQuant) + "; " + str(y) + "/" + str(channelQuant) + "; " + str(guildCount) + "/" + str(guildTotal) + " #" + str(channel.name))
+                        sheet1.write(x, y, int(messageCount))
+                        zed = y + 1
+                    if int(member) in anonAllowed:
+                        anonTotal+=int(messageCount)
+                    s = message.guild.name
+                    if s == "Cary Academy D&D- A Band of Fools" or s == "Cary Academy D&D- A Band of Fools":
+                        s = "Cary Academy DnD"
+                    wb.save(s + ".xls")
+            channelNumberIc+=1
+            sheet1.write(x+1,y,anonTotal)
+            print("Completed channel #" + channel.name)
+            
         x = 1
-        channelCounter = 1
-        for channel in AnonChannelList:
-            anonSheet.write(1, channelCounter, AnonChannelList[channel])
-        anonWorkbook.save("Anon.xls")       
+        print("Location of First Total Column: " + str(zed))
         sheet1.write(0, zed, "Message Total:")
         sheet1.write(0, zed + 1, "Date Joined:")
         sheet1.write(0, zed + 2, "Days on Server:")
         sheet1.write(0, zed + 3, "Message Average:")
         for member in memberList:
-            string = ""
-            n = y
-            while n > 0:
-                n, remainder = divmod(n - 1, 26)
-                string = chr(65 + remainder) + string
-            print(string)
-            value1 = "B" + str(x + 1)
-            value2 = string + str(x + 1)
-            sheet1.write(x, zed, xlwt.Formula("SUM(" + value1 + ":" + value2 + ")"))
-            print("Zed: " + str(zed) + ", x: " + str(x))
-            dateTimeFull = member.joined_at
-            dateTimeSplit = str(dateTimeFull).split()
-            sheet1.write(x, zed + 1, dateTimeSplit[0])
-            print("Zed: " + str(zed) + ", x: " + str(x))
-            dateTimeFull = member.joined_at
-            dateJoined = datetime.date(dateTimeFull)
-            dateTimeSplit = str(dateTimeFull).split()
-            currentDate = datetime.date(datetime.now())
-            delta = currentDate - dateJoined
-            sheet1.write(x, zed + 2, delta.days)
-            sheet1.write(x, zed + 3, xlwt.Formula("SUM(" + value1 + ":" + value2 + ")/" + str(delta.days))) 
-            print("Zed: " + str(zed) + ", x: " + str(x))
-            x+=1
-        wb.save(message.guild.name + ".xls")
+            if member.id in optAllowed:
+                string = ""
+                n = y
+                while n > 0:
+                    n, remainder = divmod(n - 1, 26)
+                    string = chr(65 + remainder) + string
+                value1 = "B" + str(x + 1)
+                value2 = string + str(x + 1)
+                sheet1.write(x, zed, xlwt.Formula("SUM(" + value1 + ":" + value2 + ")"))
+                dateTimeFull = member.joined_at
+                dateTimeSplit = str(dateTimeFull).split()
+                sheet1.write(x, zed + 1, dateTimeSplit[0])
+                dateTimeFull = member.joined_at
+                dateJoined = datetime.date(dateTimeFull)
+                dateTimeSplit = str(dateTimeFull).split()
+                currentDate = datetime.date(datetime.now())
+                delta = currentDate - dateJoined
+                sheet1.write(x, zed + 2, delta.days)
+                sheet1.write(x, zed + 3, xlwt.Formula("SUM(" + value1 + ":" + value2 + ")/" + str(delta.days))) 
+                x+=1
+        s = serverActive.name
+        if s == "Cary Academy D&D- A Band of Fools" or s == "Cary Academy D&D- A Band of Fools":
+            s = "Cary Academy DnD"
+        wb.save(s + ".xls")
         print("Complete!")
+        guildCount+=1
+        otherGuildCount +=1
+        await dmChannel.send("Completed " + serverActive.name)
     #Counts the stats of one specific server.
     if message.content.startswith("&serverActiveList") or message.content.startswith("&serveractivelist"):
         print("Server Info request made by " + message.author.name + " at " + str(message.created_at) + " for guild " + message.guild.name)
@@ -463,13 +500,6 @@ async def on_message(message):
         else:
             await message.channel.send("Sorry for the inconvience, but StatBot is currently shut down with most commands so people have the chance to opt in to the bot.")
     #Gets the list of the most active members on a server.
-    if message.content.startswith("&I bid y'all adieu") and message.author.id == 366709133195476992:
-        import time
-        time.sleep(2)
-        await message.channel.send("Farewell, and have a good night!")
-        time.sleep(2)
-        await message.guild.leave()
-    #Takes StatBot away from one specific server
     if message.content.startswith("&channelInfo") or message.content.startswith("&channelinfo"):
         print("Channel Info request made by " + message.author.name + " at " + str(message.created_at) + " on guild " + message.guild.name)
         userOptInfo = getUserOptLevel(message.author.id)
@@ -566,6 +596,7 @@ async def on_message(message):
         anonAllowed = []
         guildCount = 1
         otherGuildCount = 1
+        foo = True
         guildTotal = len(client.guilds)
         for serverActive in client.guilds:
             wb = Workbook()
@@ -587,7 +618,7 @@ async def on_message(message):
                     print("Added " + member.name + " to default optLevel for bots.")
                     defaultOpt = open("opt2.txt", "a")
                     defaultOpt.write("\n" + str(member.id))
-                    userOptLevel = 2
+                    userOptLevel = 2    
                 if userOptLevel >= 0:
                     anonAllowed.append(member.id)
                 if userOptLevel >= 1:
@@ -649,7 +680,11 @@ async def on_message(message):
                             s = "Cary Academy DnD"
                         wb.save(s + ".xls")
                 channelNumberIc+=1
-                sheet1.write(x+1,y,anonTotal)
+                print("X: " + str(x+1) + ", Y: " + str(y) + ", Value: " + str(anonTotal))
+                
+                if anonTotal == 2529 and foo == True:
+                    foo = False
+                    sheet1.write(x+1, y, anonTotal)
                 print("Completed channel #" + channel.name)
                 
             x = 1
@@ -813,7 +848,7 @@ async def on_message(message):
         for i in client.guilds: 
             print(i.name + "(" + str(i.id) + ")")
             for person in i.members:
-                if person not in memberList:
+                if person not in memberList and getUserOptLevel(person.id) >= 1:
                     memberList.append(person)
         print('Members Finished')
         number = 1
@@ -1080,25 +1115,55 @@ async def on_message(message):
     if message.content.startswith("&overTimeMessageChart") and message.author.id == 366709133195476992:        
         wa = Workbook()
         for server in client.guilds:
-            userList = {}
+            userList = []
             anonUsers = []
+            sept = {}
+            octo = {}
+            nove = {}
+            dece = {}
+            jan = {}
+            feb = {}
+            mar = {}
+            apr = {}
             for member in server.members:
-                if getUserOptLevel(member.id) >= 2:
+                if getUserOptLevel(member.id) >= 2 and member.bot == False:
                     print("Valid Member: " + member.name + " (" + str(member.id) + ")")
-                    userList[member.name] = 0
+                    sept[member.name] = 0
+                    octo[member.name] = 0
+                    nove[member.name] = 0
+                    dece[member.name] = 0
+                    jan[member.name] = 0
+                    feb[member.name] = 0
+                    mar[member.name] = 0
+                    apr[member.name] = 0
+                    userList.append(member.name)
                 if getUserOptLevel(member.id) >= 0:
                     print("Anon Member: " + member.name + " (" + str(member.id) + ")")
                     anonUsers.append(member.name)
-            userList["anon"] = 0
+            sept["anon"] = 0
+            octo["anon"] = 0
+            nove["anon"] = 0
+            dece["anon"] = 0
+            jan["anon"] = 0
+            feb["anon"] = 0
+            mar["anon"] = 0
+            apr["anon"] = 0
+            userList.append("anon")
             months = []
             month = 0
-            for i in range(7):
-                newMonthList = userList
-                months.append(newMonthList)
+            months.append(sept)
+            months.append(octo)
+            months.append(nove)
+            months.append(dece)
+            months.append(jan)
+            months.append(feb)
+            months.append(mar)
+            months.append(apr)
+
             for channel in server.text_channels:
                 print("Checking #" + channel.name)
-                newList = []
-                for message in channel.history(limit=None):
+                newList = {}
+                async for message in channel.history(limit=None):
                     if message.created_at.month == 9:
                         newList = months[0]
                     if message.created_at.month == 10:
@@ -1109,13 +1174,15 @@ async def on_message(message):
                         newList = months[3]
                     if message.created_at.month == 1:
                         newList = months[4]
-                    if message.created_at.month == 2:
+                    if message.created_at.month == 2 :
                         newList = months[5]
                     if message.created_at.month == 3:
                         newList = months[6]
+                    if message.created_at.month == 4:
+                        newList = months[7]
                     if message.author.name in userList:
-                        newList[member.name]+=1
-                    if message.author in anonUsers:
+                        newList[message.author.name]+=1
+                    if message.author.name in anonUsers:
                         newList["anon"]+=1
                     
             print("Completed channels.")
@@ -1131,14 +1198,19 @@ async def on_message(message):
             sheet1.write(0, 5, "Jan.")
             sheet1.write(0, 6, "Feb.")
             sheet1.write(0, 7, "Mar.")
+            sheet1.write(0, 8, "Apr.")
+
             zep = 0
             for moth in months:
+                print("Anon Count: " + str(moth["anon"]))
                 zeep = 1
                 zep+=1
                 for user in moth:
                     sheet1.write(zeep, zep, moth[user])
+                    print(user + ": " + str(moth[user]))
                     zeep+=1
             wa.save("yes.xls")
+            print("Completed!")
     #New command to make a chart. 
-                
-client.run('NjYyNzg4MTk1NzM3NDAzNDQy.Xg_Dqg.RvP5k1D4dWeg0tqomlXiaHz7QQg')
+print("And we have hit the token. ")     
+client.run('NjYyNzg4MTk1NzM3NDAzNDQy.XoXn6Q.YvnYRdv8bhMSLmNcu9E8JOm2-4c')
