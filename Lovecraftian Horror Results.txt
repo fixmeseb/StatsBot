@@ -1,0 +1,24 @@
+Azathoth:
+   -Freshmen: 0
+   -Sophmore: 2
+   -Junior: 4
+   -Senior: 12
+   -Total: 18/52 (34.62%)
+Nyarlathotep:
+   -Freshmen: 1
+   -Sophmore: 1
+   -Junior: 2
+   -Senior: 4
+   -Total: 8/52 (15.38%)
+Shoggoth:
+   -Freshmen: 2
+   -Sophmore: 2
+   -Junior: 1
+   -Senior: 9
+   -Total: 14/52 (26.92%)
+The Colour Out of Space:
+   -Freshmen: 3
+   -Sophmore: 1
+   -Junior: 1
+   -Senior: 7
+   -Total: 12/52 (23.08%)

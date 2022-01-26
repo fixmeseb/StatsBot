@@ -1,0 +1,24 @@
+Mokele-Mbembe:
+   -Freshmen: 1
+   -Sophmore: 1
+   -Junior: 2
+   -Senior: 6
+   -Total: 10/29 (34.48%)
+Destroyah:
+   -Freshmen: 0
+   -Sophmore: 2
+   -Junior: 1
+   -Senior: 4
+   -Total: 7/29 (24.14%)
+Bunyip:
+   -Freshmen: 1
+   -Sophmore: 0
+   -Junior: 2
+   -Senior: 3
+   -Total: 6/29 (20.69%)
+Giant Condor:
+   -Freshmen: 1
+   -Sophmore: 0
+   -Junior: 2
+   -Senior: 3
+   -Total: 6/29 (20.69%)

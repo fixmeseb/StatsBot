@@ -1,0 +1,6 @@
+admin-log
+897917865569701948|Starfall#7832 [#admin-log]: mute has been lifted (14:00)
+883136114179837964|MasterOfShadow#4420 [#admin-log]: blah (19:00)
+807006751152537661|Starfall#7832 [#admin-log]: switched "the salt channel" descriptor from <#525414897815912459> to <#788462634701291521> because it's more accurate that way (16:00)
+799630305127563304|Astroturtle#9056 [#admin-log]: New post in <#525039388267380736> (8:00)
+798936260348739634|Astroturtle#9056 [#admin-log]: Testing out 30s slowmode in <#554803608890245130> (10:00)
