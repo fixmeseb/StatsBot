@@ -655,7 +655,9 @@ for courseName in courseData.keys():
         newRacer.lastName = person.lastName
         newRacer.school = person.school
         people[name] = newRacer
-        
+
+
+
 
 print(str(people["Sebastian Polge"].times))
 print(str(people["Arran Swift"].times))
@@ -674,6 +676,20 @@ keys = list(people.keys())
 keys.sort()
 for key in keys: 
     peopleNew[key] = people[key]
+
+print("\n\n")
+total = 0
+for person in peopleNew.values():
+    if len(person.times.keys()) > 2:
+        total+=1
+for course in courseData.keys():
+    fonal = 0
+    for person in peopleNew.values():
+        if len(person.times.keys()) > 2:
+            if course in person.times.keys():
+                fonal+=1
+    print(course + " len: " + str(fonal) + "/" + str(len(courseData[course].people)))
+print("Total: " + str(total))
 
 ws1 = wb.create_sheet("Times")
 ws2 = wv.create_sheet("Times")
@@ -746,10 +762,10 @@ for raceName in races.keys():
     i+=1
 
 
-wb.save("XC Sheet No Dupes.xlsx")
-wv.save("XC Sheet Seconds No Dupes.xlsx")
-wb2.save("XC Sheet.xlsx")
-wv2.save("XC Sheet Seconds.xlsx")
+#wb.save("XC Sheet No Dupes.xlsx")
+#wv.save("XC Sheet Seconds No Dupes.xlsx")
+#wb2.save("XC Sheet.xlsx")
+#wv2.save("XC Sheet Seconds.xlsx")
 
 
 
