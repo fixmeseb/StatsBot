@@ -1,6 +1,0 @@
-robotics
-926020585065156643|blockhead#6002 [#robotics]: NO (2:00)
-926020576320041001|Robot Bot#7073 [#robotics]:  (2:00)
-926020576089354300|blockhead#6002 [#robotics]: 254 (2:00)
-923011985786937394|minerharry#2714 [#robotics]: Pog (19:00)
-922991616908726322|Notsomeonerando#8558 [#robotics]: Good news the cim motor mount is almost done for the shooter so now the motor won’t jump up 3 inches when we turn it on (18:00)

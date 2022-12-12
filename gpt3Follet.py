@@ -1,3 +1,0 @@
-import openai
-
-export OPENAI_API_KEY="<OPENAI_API_KEY>"

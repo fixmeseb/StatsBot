@@ -1,7 +1,0 @@
-logging
-909277248408920084|Gapbot#4852 [#logging]: <@158623047643955200> ran: $purge 13 in <#524454096355459072> (22:00)
-903120250495709184|basedbot#1770 [#logging]: > based 
-based? based on what (23:00)
-903120249828802570|blockhead#6002 [#logging]: based (23:00)
-903118994251346000|Valis#7360 [#logging]: those that speak poorly of gapbot must perish (23:00)
-903118949531656242|Valis#7360 [#logging]: just purging the dissidents (23:00)

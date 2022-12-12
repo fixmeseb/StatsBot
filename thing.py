@@ -1,5 +1,5 @@
 import discord
-#This imports Discord. Named thing.py because my old bots had their main files in thing.js, and I'm sentimental. 
+#The old StatBot code I think. When StatBot actually answered querys and whatnot. Probably. Added this 12.12.2022. 
 import xlrd
 import xlwt
 import pytz

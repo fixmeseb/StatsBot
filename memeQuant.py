@@ -1,5 +1,5 @@
 import discord
-#This imports Discord. Named thing.py because my old bots had their main files in thing.js, and I'm sentimental. 
+#Looks like this searches through the #me-me-s channel on the CA Discord and writes down the number of stars per meme. Updated 12.12.2022. 
 
 from datetime import date
 from datetime import datetime
@@ -12,10 +12,6 @@ import pytz
 
 est = pytz.timezone('US/Eastern')
 utc = pytz.utc
-
-# To run a new month: 
-# - Update monthsPossible
-
 
 intents = discord.Intents.all()
 client = discord.Client(intents=intents)
@@ -118,9 +114,4 @@ async def on_ready():
 
     print("Completed!")
 
-
-
-
-    
-
-client.run('NjYyNzg4MTk1NzM3NDAzNDQy.Xg_Dmw.dyg4Kch4KxX6C6bDZAcx-Le2TVs')
+client.run('NjYyNzg4MTk1NzM3NDAzNDQy.Gw3sKx.6XM0TZPT6SP5i4vyJ4KoYZlfp_eeOhgGA8icLc')

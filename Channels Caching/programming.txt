@@ -1,8 +1,0 @@
-programming
-924751017881514044|minerharry#2714 [#programming]: What the heck (14:00)
-924741238442311703|blockhead#6002 [#programming]: also petition to rename actor-critic to critic-chef so you can pretend that your neural network is a panicked chef in a kitchen with a random critic yelling at it to do better (14:00)
-924740280513613876|blockhead#6002 [#programming]: omfg
-i spent like 20 minutes wondering why my code was outputting the same result regardless of the game state even though it's randomly initialized
-and it turns out I FORGOT TO UPDATE THE STATE VARIABLE so it kept predicting based on the starting state and not the current/updated state (14:00)
-924235423344128080|moss#0001 [#programming]: we have yet to convert everyone in here into c enthusiasts but it will happen eventually (4:00)
-924052088382713917|MasterOfShadow#4420 [#programming]: I don’t understand why you need to learn Python to serve coffee (16:00)

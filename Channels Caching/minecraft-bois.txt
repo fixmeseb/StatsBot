@@ -1,6 +1,0 @@
-minecraft-bois
-918934479794483271|Valis#7360 [#minecraft-bois]: it’s RCE from a dep. just do mojangs update. rip old versions (13:00)
-918934367982739537|Valis#7360 [#minecraft-bois]: https://www.lunasec.io/docs/blog/log4j-zero-day/ (13:00)
-918636437056933909|Valis#7360 [#minecraft-bois]: unless mojang hasn't patched it in the multi-month standard window (for security bug fixes) (17:00)
-918636369042079744|Valis#7360 [#minecraft-bois]: also like, if this is a critical bug, aren't they supposed to report to mojang before spewing anything? (17:00)
-918636194248671304|Valis#7360 [#minecraft-bois]: who is the iris team (17:00)
