@@ -1213,4 +1213,4 @@ async def on_message(message):
             print("Completed!")
     #New command to make a chart. 
 print("And we have hit the token. ")     
-client.run('NjYyNzg4MTk1NzM3NDAzNDQy.XoXn6Q.YvnYRdv8bhMSLmNcu9E8JOm2-4c')
+client.run('')
